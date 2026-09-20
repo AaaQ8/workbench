@@ -26,7 +26,9 @@ const Store = {
     CET_VOCAB: 'pw_cet_vocab',
     CET_SCORES: 'pw_cet_scores',
     EDIT_PROJECTS: 'pw_edit_projects',
-    OUTFIT_WEEK: 'pw_outfit_week'
+    OUTFIT_WEEK: 'pw_outfit_week',
+    BEAUTY_PROFILE: 'pw_beauty_profile',
+    BOOKS: 'pw_books'
   },
 
   get(key, def) {
