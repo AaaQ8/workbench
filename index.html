@@ -909,6 +909,7 @@
               <option value="done">读完</option>
             </select>
             <button id="book-add" class="btn-primary">添加</button>
+            <button id="book-cancel" class="btn-ghost" style="display:none;">取消编辑</button>
           </div>
         </div>
         <div class="card">
@@ -1660,6 +1661,16 @@
           <p class="smart-tip">💡 数据默认保存在本浏览器,导出备份可防止丢失</p>
         </div>
         <div class="card">
+          <h3 class="card-title">📂 手机内容导入</h3>
+          <div class="setting-row">
+            <button id="phone-import" class="btn-primary">从手机选择文件</button>
+            <input type="file" id="phone-files" multiple accept="image/*,.txt,.md,.csv,.json" style="display:none" />
+            <span id="phone-msg" style="font-size:12px;color:var(--accent);"></span>
+          </div>
+          <ul id="phone-list" class="note-list" style="margin-top:10px;"></ul>
+          <p class="smart-tip">💡 照片会自动压缩保存,文本(.txt/.md)读取内容;出于隐私限制,浏览器只能读取你手动选择的文件,无法扫描整个手机</p>
+        </div>
+        <div class="card">
           <h3 class="card-title">📱 手机访问</h3>
           <p class="smart-tip">手机与电脑连同一个 Wi-Fi,用手机浏览器扫码打开;在手机浏览器菜单里选「添加到主屏幕」,就能像 App 一样全屏使用</p>
           <div id="phone-qr" style="background:#fff;padding:10px;border-radius:10px;width:184px;height:184px;margin:10px 0 4px;"></div>
@@ -1702,7 +1713,7 @@
   <!-- 脚本加载顺序(?v=6 用于破缓存) -->
   <script src="js/chart.umd.min.js?v=1"></script>
   <script src="js/marked.min.js?v=1"></script>
-  <script src="js/store.js?v=7"></script>
+  <script src="js/store.js?v=8"></script>
   <script src="js/meta.js?v=4"></script>
   <script src="js/goals.js?v=4"></script>
   <script src="js/knowledge.js?v=6"></script>
@@ -1713,7 +1724,8 @@
   <script src="js/express.js?v=4"></script>
   <script src="js/law.js?v=4"></script>
   <script src="js/wellness.js?v=1"></script>
-  <script src="js/books.js?v=1"></script>
+  <script src="js/books.js?v=2"></script>
+  <script src="js/phone.js?v=1"></script>
   <script src="js/outfit.js?v=6"></script>
   <script src="js/makeup.js?v=4"></script>
   <script src="js/finance.js?v=5"></script>
@@ -1728,7 +1740,7 @@
   <script src="js/qrcode.min.js?v=1"></script>
   <script src="js/ai.js?v=4"></script>
   <script src="js/settings.js?v=5"></script>
-  <script src="js/main.js?v=6"></script>
+  <script src="js/main.js?v=7"></script>
 
 </body>
 </html>
