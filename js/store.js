@@ -28,7 +28,8 @@ const Store = {
     EDIT_PROJECTS: 'pw_edit_projects',
     OUTFIT_WEEK: 'pw_outfit_week',
     BEAUTY_PROFILE: 'pw_beauty_profile',
-    BOOKS: 'pw_books'
+    BOOKS: 'pw_books',
+    PHONE_FILES: 'pw_phone_files'
   },
 
   get(key, def) {
