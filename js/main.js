@@ -328,6 +328,8 @@ document.addEventListener('DOMContentLoaded', () => {
   safeInit('wellness',  typeof window.initWellness  !== 'undefined' ? window.initWellness  : null);
   safeInit('books',     typeof window.initBooks     !== 'undefined' ? window.initBooks     : null);
   safeInit('phone',     typeof window.initPhone     !== 'undefined' ? window.initPhone     : null);
+  safeInit('timetable', typeof window.initTimetable !== 'undefined' ? window.initTimetable : null);
+  safeInit('planner',   typeof window.initPlanner   !== 'undefined' ? window.initPlanner   : null);
   safeInit('outfit',    typeof window.initOutfit    !== 'undefined' ? window.initOutfit    : null);
   safeInit('makeup',    typeof window.initMakeup    !== 'undefined' ? window.initMakeup    : null);
   safeInit('finance',   typeof window.initFinance   !== 'undefined' ? window.initFinance   : null);
