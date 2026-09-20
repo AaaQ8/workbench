@@ -325,6 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
   safeInit('english',   typeof window.initEnglish   !== 'undefined' ? window.initEnglish   : null);
   safeInit('express',   typeof window.initExpress   !== 'undefined' ? window.initExpress   : null);
   safeInit('law',       typeof window.initLaw       !== 'undefined' ? window.initLaw       : null);
+  safeInit('wellness',  typeof window.initWellness  !== 'undefined' ? window.initWellness  : null);
+  safeInit('books',     typeof window.initBooks     !== 'undefined' ? window.initBooks     : null);
   safeInit('outfit',    typeof window.initOutfit    !== 'undefined' ? window.initOutfit    : null);
   safeInit('makeup',    typeof window.initMakeup    !== 'undefined' ? window.initMakeup    : null);
   safeInit('finance',   typeof window.initFinance   !== 'undefined' ? window.initFinance   : null);
