@@ -3,6 +3,11 @@
 function renderPhoneFiles() {
   const ul = $('#phone-list');
   if (!ul) return;
+  const stBox = $('#phone-storage');
+  if (stBox) {
+    const used = Store.usage();
+    stBox.textContent = used >= 0 ? `💾 存储空间已用约 ${(used / 1024 / 1024).toFixed(1)} MB(上限约 5 MB,照片最占空间)` : '';
+  }
   const list = Store.get(Store.KEYS.PHONE_FILES, []);
   ul.innerHTML = '';
   if (!list.length) {
@@ -107,14 +112,14 @@ function initPhone() {
       }
     }
     const msg = $('#phone-msg');
-    try {
-      Store.set(Store.KEYS.PHONE_FILES, list);
+    const ok = Store.set(Store.KEYS.PHONE_FILES, list);
+    if (ok) {
       if (msg) {
         msg.textContent = added ? `已导入 ${added} 项${skipped ? `,跳过 ${skipped} 项` : ''}` : '没有可支持的文件类型';
         setTimeout(() => { msg.textContent = ''; }, 3000);
       }
-    } catch (e) {
-      alert('存储空间不足,已导入的内容没有保存。建议删掉一些旧照片再试(照片占用空间最大)');
+    } else if (msg) {
+      msg.textContent = '空间不足,没有保存!';
     }
     input.value = '';
     renderPhoneFiles();
