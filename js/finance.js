@@ -171,7 +171,8 @@ function initFinance() {
     }
     const list = Store.get(Store.KEYS.FINANCE, []);
     list.unshift({ id: uid(), type, amount, category, date, createdAt: Date.now() });
-    Store.set(Store.KEYS.FINANCE, list);
+    const ok = Store.set(Store.KEYS.FINANCE, list);
+    if (!ok) return; // 存储满,Store 已弹窗提示
     $('#fin-amount').value = '';
     $('#fin-cat').value = '';
     loadFinance();
