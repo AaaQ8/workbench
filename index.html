@@ -87,6 +87,9 @@
             <button class="nav-item" data-panel="knowledge">
               <span class="nav-icon">📚</span><span class="nav-label">笔记库</span>
             </button>
+            <button class="nav-item" data-panel="books">
+              <span class="nav-icon">📖</span><span class="nav-label">书单</span>
+            </button>
           </nav>
         </div>
       </div>
@@ -140,6 +143,19 @@
             </button>
             <button class="nav-item" data-panel="makeup">
               <span class="nav-icon">💄</span><span class="nav-label">美妆</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-health">
+            🌿 健康养生 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-health">
+            <button class="nav-item" data-panel="wellness">
+              <span class="nav-icon">🌿</span><span class="nav-label">养生</span>
             </button>
           </nav>
         </div>
@@ -815,6 +831,36 @@
         </div>
       </section>
 
+      <!-- 📖 书单 -->
+      <section class="tab-panel" id="panel-books">
+        <div class="card">
+          <h3 class="card-title">➕ 记录一本书</h3>
+          <div class="study-input-wrap">
+            <input type="text" id="book-title" placeholder="书名,如:被讨厌的勇气" />
+          </div>
+          <div class="study-input-wrap">
+            <input type="text" id="book-author" placeholder="作者(可不填)" style="flex:1;" />
+            <select id="book-status" style="width:88px;">
+              <option value="wish">想读</option>
+              <option value="reading" selected>在读</option>
+              <option value="done">读完</option>
+            </select>
+            <button id="book-add" class="btn-primary">添加</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📚 我的书单</h3>
+          <div class="focus-modes" id="book-filters" style="margin-bottom:10px;">
+            <button class="focus-mode-btn active" data-f="all">全部</button>
+            <button class="focus-mode-btn" data-f="wish">想读</button>
+            <button class="focus-mode-btn" data-f="reading">在读</button>
+            <button class="focus-mode-btn" data-f="done">读完</button>
+          </div>
+          <ul id="book-list" class="note-list"></ul>
+          <p class="smart-tip">💡 点击书名旁的标签循环状态(想读→在读→读完),✕ 删除</p>
+        </div>
+      </section>
+
       <!-- 👗 穿搭 -->
       <section class="tab-panel" id="panel-outfit">
         <div class="card">
@@ -863,6 +909,56 @@
             <div class="week-day" data-day="5"><div class="wd-name">周六</div><div class="wd-outfit">—</div></div>
             <div class="week-day" data-day="6"><div class="wd-name">周日</div><div class="wd-outfit">—</div></div>
           </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎬 穿搭技巧视频</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=穿搭技巧" target="_blank" rel="noopener">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 穿搭技巧</div>
+                <div class="resource-desc">穿搭干货长视频教学</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=通勤穿搭" target="_blank" rel="noopener">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 通勤穿搭</div>
+                <div class="resource-desc">上班族的日常搭配</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=小个子穿搭" target="_blank" rel="noopener">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 小个子穿搭</div>
+                <div class="resource-desc">显高显腿长技巧</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/search/穿搭技巧?type=video" target="_blank" rel="noopener">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音 · 穿搭技巧</div>
+                <div class="resource-desc">短视频穿搭灵感(手机跳转App)</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/search/微胖穿搭?type=video" target="_blank" rel="noopener">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音 · 微胖穿搭</div>
+                <div class="resource-desc">显瘦穿搭方案</div>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🌸 我的特征档案</h3>
+          <div id="profile-form"></div>
+          <div style="display:flex;align-items:center;margin-top:10px;">
+            <button id="profile-save" class="btn-primary small">保存特征</button>
+            <span id="profile-msg" style="margin-left:8px;font-size:12px;color:var(--accent);"></span>
+          </div>
+          <div id="profile-links" class="resource-list" style="margin-top:12px;"></div>
+          <p class="smart-tip">💡 填好特征保存后,自动生成为你定制的穿搭/美妆视频搜索入口(抖音+B站),美妆页也会同步出现</p>
         </div>
       </section>
 
@@ -917,6 +1013,103 @@
             <a class="media-item" href="https://search.bilibili.com/all?keyword=NARS%20%E8%85%AE%E7%BA%A2%20Orgasm%20%E6%B5%8B%E8%AF%84" target="_blank" rel="noopener">🖌️ NARS 腮红 #Orgasm <span class="tag">万能色</span></a>
             <a class="media-item" href="https://search.bilibili.com/all?keyword=3CE%20Overtake%20%E7%9C%BC%E5%BD%B1%20%E6%95%99%E7%A8%8B" target="_blank" rel="noopener">👁️ 3CE 眼影盘 #Overtake <span class="tag">日常</span></a>
             <a class="media-item" href="https://search.bilibili.com/all?keyword=Charlotte%20Tilbury%20%E9%AB%98%E5%85%89%20%E6%B5%8B%E8%AF%84" target="_blank" rel="noopener">✨ Charlotte Tilbury 高光 <span class="tag">水光肌</span></a>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🧬 按我的特征找教程</h3>
+          <div id="makeup-profile-links" class="resource-list"></div>
+          <p class="smart-tip">💡 根据「穿搭 → 我的特征档案」里保存的肤质/脸型/肤色自动生成专属教程入口</p>
+        </div>
+      </section>
+
+      <!-- 🌿 养生 -->
+      <section class="tab-panel" id="panel-wellness">
+        <div class="card">
+          <h3 class="card-title">🌿 今日养生贴士</h3>
+          <div id="wellness-tip" style="padding:12px 14px;border-radius:10px;background:var(--bg-hover);font-size:14px;line-height:1.7;"></div>
+          <p class="smart-tip">💡 每天自动换一条,日积月累</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🧘 八段锦 &amp; 养生功法视频</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=八段锦官方教学" target="_blank" rel="noopener">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 八段锦官方教学</div>
+                <div class="resource-desc">国家体育总局版,标准动作分解</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=八段锦跟练" target="_blank" rel="noopener">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 八段锦跟练</div>
+                <div class="resource-desc">跟着口令一起练,每天12分钟</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=站桩教学" target="_blank" rel="noopener">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 站桩教学</div>
+                <div class="resource-desc">养气安神的基础功法</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=太极拳教学" target="_blank" rel="noopener">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 太极拳教学</div>
+                <div class="resource-desc">柔和缓慢,适合零基础</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/search/八段锦?type=video" target="_blank" rel="noopener">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音 · 八段锦</div>
+                <div class="resource-desc">短视频跟练(手机跳转App)</div>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🍵 吃什么 · 时令养生</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=养生食谱" target="_blank" rel="noopener">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 养生食谱</div>
+                <div class="resource-desc">家常养生餐做法视频</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=时令养生汤" target="_blank" rel="noopener">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 时令养生汤</div>
+                <div class="resource-desc">应季煲汤,一家老小都适合</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/search/吃什么养生?type=video" target="_blank" rel="noopener">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音 · 吃什么养生</div>
+                <div class="resource-desc">当季吃什么短视频(手机跳转App)</div>
+              </div>
+            </a>
+          </div>
+          <ul class="note-list" style="margin-top:10px;">
+            <li class="note-item">🥣 早餐要吃热,小米粥、鸡蛋最养胃</li>
+            <li class="note-item">🥬 每天半斤绿叶菜,应季的优先</li>
+            <li class="note-item">💧 少喝冰饮,温水最养脾胃</li>
+            <li class="note-item">🍚 晚饭七分饱,睡前 3 小时不进食</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📜 日常养生知识</h3>
+          <ul class="note-list">
+            <li class="note-item">😴 23 点前睡觉,子时是身体修复黄金期</li>
+            <li class="note-item">🚶 久坐每小时起身活动 3 分钟</li>
+            <li class="note-item">🧦 寒从脚起,天凉先护好脚踝和脖子</li>
+            <li class="note-item">😤 少怒养肝,情绪平稳是最好的养生</li>
+            <li class="note-item">☀️ 上午晒背 15 分钟,补阳气促吸收</li>
+            <li class="note-item">🍵 红枣枸杞虽好,湿热体质要少吃</li>
           </ul>
         </div>
       </section>
@@ -1204,6 +1397,46 @@
             <a class="source-item" href="https://www.adobe.com/products/aftereffects.html" target="_blank" rel="noopener"><div class="src-icon">🎨</div><div class="src-name">After Effects</div></a>
           </div>
         </div>
+        <div class="card">
+          <h3 class="card-title">🎓 剪辑技巧视频</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=剪映教程" target="_blank" rel="noopener">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 剪映教程</div>
+                <div class="resource-desc">手机/电脑剪辑入门到进阶</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=PR教程" target="_blank" rel="noopener">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · Premiere 教程</div>
+                <div class="resource-desc">专业剪辑软件系统学习</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=视频调色教程" target="_blank" rel="noopener">
+              <div class="resource-icon">🎨</div>
+              <div>
+                <div class="resource-title">B站 · 调色教程</div>
+                <div class="resource-desc">让画面质感翻倍的调色思路</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=剪辑思路" target="_blank" rel="noopener">
+              <div class="resource-icon">🧠</div>
+              <div>
+                <div class="resource-title">B站 · 剪辑思路</div>
+                <div class="resource-desc">节奏、叙事与转场技巧</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/search/剪辑技巧?type=video" target="_blank" rel="noopener">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音 · 剪辑技巧</div>
+                <div class="resource-desc">短视频剪辑小妙招(手机跳转App)</div>
+              </div>
+            </a>
+          </div>
+        </div>
       </section>
 
       <!-- 🧘 专注 -->
@@ -1406,7 +1639,7 @@
   <!-- 脚本加载顺序(?v=6 用于破缓存) -->
   <script src="js/chart.umd.min.js?v=1"></script>
   <script src="js/marked.min.js?v=1"></script>
-  <script src="js/store.js?v=6"></script>
+  <script src="js/store.js?v=7"></script>
   <script src="js/meta.js?v=4"></script>
   <script src="js/goals.js?v=4"></script>
   <script src="js/knowledge.js?v=6"></script>
@@ -1416,7 +1649,9 @@
   <script src="js/english.js?v=6"></script>
   <script src="js/express.js?v=4"></script>
   <script src="js/law.js?v=4"></script>
-  <script src="js/outfit.js?v=5"></script>
+  <script src="js/wellness.js?v=1"></script>
+  <script src="js/books.js?v=1"></script>
+  <script src="js/outfit.js?v=6"></script>
   <script src="js/makeup.js?v=4"></script>
   <script src="js/finance.js?v=5"></script>
   <script src="js/news.js?v=4"></script>
@@ -1430,7 +1665,7 @@
   <script src="js/qrcode.min.js?v=1"></script>
   <script src="js/ai.js?v=4"></script>
   <script src="js/settings.js?v=5"></script>
-  <script src="js/main.js?v=5"></script>
+  <script src="js/main.js?v=6"></script>
 
 </body>
 </html>
