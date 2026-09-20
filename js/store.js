@@ -1,3 +1,5 @@
+let _quotaWarned = false;
+
 const Store = {
   KEYS: {
     TODOS: 'pw_todos',
@@ -43,7 +45,29 @@ const Store = {
   },
 
   set(key, val) {
-    localStorage.setItem(key, JSON.stringify(val));
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+      return true;
+    } catch (e) {
+      // 存储满/隐私模式:只弹一次窗,不再让异常打断页面初始化和各功能
+      if (!_quotaWarned) {
+        _quotaWarned = true;
+        alert('浏览器存储空间已满,保存失败!\n\n解决办法:\n1. 打开「系统设置 → 手机内容导入」,删掉几张已导入的照片(照片最占空间)\n2. 先「导出数据」备份,再清理浏览器其他网站的数据\n3. 清理后刷新页面即可正常使用');
+      }
+      return false;
+    }
+  },
+
+  usage() {
+    // 粗略估算已用空间(字符数 ≈ 字节,base64 照片占大头)
+    let total = 0;
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        total += (localStorage.getItem(k) || '').length + k.length;
+      }
+    } catch { return -1; }
+    return total;
   },
 
   dailyReset() {
