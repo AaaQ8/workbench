@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>个人工作台</title>
-  <link rel="stylesheet" href="css/style.css?v=5" />
+  <link rel="stylesheet" href="css/style.css?v=6" />
   <!-- PWA:手机「添加到主屏幕」后可全屏像 App 一样使用 -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d0d0f" />
@@ -71,6 +71,9 @@
             <button class="nav-item" data-panel="goals">
               <span class="nav-icon">🎯</span><span class="nav-label">目标管理</span>
             </button>
+            <button class="nav-item" data-panel="planner">
+              <span class="nav-icon">📝</span><span class="nav-label">每日计划</span>
+            </button>
             <button class="nav-item" data-panel="achievements">
               <span class="nav-icon">🏆</span><span class="nav-label">成就库</span>
             </button>
@@ -127,6 +130,9 @@
             </button>
             <button class="nav-item" data-panel="law">
               <span class="nav-icon">⚖️</span><span class="nav-label">法律</span>
+            </button>
+            <button class="nav-item" data-panel="timetable">
+              <span class="nav-icon">📅</span><span class="nav-label">课表</span>
             </button>
           </nav>
         </div>
@@ -894,6 +900,46 @@
         </div>
       </section>
 
+      <!-- 📅 课表 -->
+      <section class="tab-panel" id="panel-timetable">
+        <div class="card">
+          <h3 class="card-title">➕ 添加课程</h3>
+          <div class="study-input-wrap">
+            <input type="text" id="tt-name" placeholder="课程名,如:高等数学" />
+          </div>
+          <div class="study-input-wrap">
+            <input type="text" id="tt-room" placeholder="教室(可选),如:教三 401" style="flex:1;" />
+            <input type="text" id="tt-teacher" placeholder="老师(可选)" style="flex:1;" />
+          </div>
+          <div class="study-input-wrap">
+            <select id="tt-day" style="flex:1;">
+              <option value="1">周一</option>
+              <option value="2">周二</option>
+              <option value="3">周三</option>
+              <option value="4">周四</option>
+              <option value="5">周五</option>
+              <option value="6">周六</option>
+              <option value="0">周日</option>
+            </select>
+            <select id="tt-period" style="flex:1;">
+              <option value="0">第1节 8:00</option>
+              <option value="1">第2节 10:00</option>
+              <option value="2">第3节 14:00</option>
+              <option value="3">第4节 16:00</option>
+              <option value="4">第5节 19:00</option>
+            </select>
+            <button id="tt-add" class="btn-primary">添加</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title" id="tt-today-title">📍 今天</h3>
+          <div id="tt-today-list" class="note-list" style="margin-bottom:10px;"></div>
+          <h3 class="card-title" style="font-size:15px;">🗓 一周课表(点课程可删除)</h3>
+          <div id="tt-grid" class="tt-grid"></div>
+          <p class="smart-tip">💡 高亮列是今天;课程颜色按课名自动分配</p>
+        </div>
+      </section>
+
       <!-- 📖 书单 -->
       <section class="tab-panel" id="panel-books">
         <div class="card">
@@ -1083,6 +1129,41 @@
           <h3 class="card-title">🧬 按我的特征找教程</h3>
           <div id="makeup-profile-links" class="resource-list"></div>
           <p class="smart-tip">💡 根据「穿搭 → 我的特征档案」里保存的肤质/脸型/肤色自动生成专属教程入口</p>
+        </div>
+      </section>
+
+      <!-- 📝 每日计划 -->
+      <section class="tab-panel" id="panel-planner">
+        <div class="card">
+          <h3 class="card-title">➕ 安排一件事</h3>
+          <div class="study-input-wrap">
+            <input type="text" id="pl-text" placeholder="要做什么?如:高数作业第3章" />
+          </div>
+          <div class="study-input-wrap">
+            <select id="pl-cat" style="flex:1;">
+              <option value="学习">📚 学习</option>
+              <option value="生活">🏠 生活</option>
+              <option value="运动">🏃 运动</option>
+              <option value="其他">✨ 其他</option>
+            </select>
+            <input type="time" id="pl-time" style="flex:1;" />
+            <button id="pl-add" class="btn-primary">添加</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📊 完成情况</h3>
+          <div id="pl-streak" style="font-size:13px;margin-bottom:8px;"></div>
+          <canvas id="pl-chart" height="150"></canvas>
+        </div>
+        <div class="card">
+          <h3 class="card-title">✅ 今日任务清单</h3>
+          <div class="focus-modes" id="pl-filters" style="margin-bottom:10px;">
+            <button class="focus-mode-btn active" data-f="today">今日</button>
+            <button class="focus-mode-btn" data-f="all">全部</button>
+            <button class="focus-mode-btn" data-f="done">已完成</button>
+          </div>
+          <ul id="pl-list" class="note-list"></ul>
+          <p class="smart-tip">💡 可给任务安排时间,到点未完成会标红;点击圆圈打卡完成</p>
         </div>
       </section>
 
@@ -1713,7 +1794,7 @@
   <!-- 脚本加载顺序(?v=6 用于破缓存) -->
   <script src="js/chart.umd.min.js?v=1"></script>
   <script src="js/marked.min.js?v=1"></script>
-  <script src="js/store.js?v=8"></script>
+  <script src="js/store.js?v=9"></script>
   <script src="js/meta.js?v=4"></script>
   <script src="js/goals.js?v=4"></script>
   <script src="js/knowledge.js?v=6"></script>
@@ -1726,6 +1807,8 @@
   <script src="js/wellness.js?v=1"></script>
   <script src="js/books.js?v=2"></script>
   <script src="js/phone.js?v=1"></script>
+  <script src="js/timetable.js?v=1"></script>
+  <script src="js/planner.js?v=1"></script>
   <script src="js/outfit.js?v=6"></script>
   <script src="js/makeup.js?v=4"></script>
   <script src="js/finance.js?v=5"></script>
@@ -1740,7 +1823,7 @@
   <script src="js/qrcode.min.js?v=1"></script>
   <script src="js/ai.js?v=4"></script>
   <script src="js/settings.js?v=5"></script>
-  <script src="js/main.js?v=7"></script>
+  <script src="js/main.js?v=8"></script>
 
 </body>
 </html>
