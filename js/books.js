@@ -1,10 +1,23 @@
-/* 书单:想读/在读/读完 记录(localStorage 持久化) */
+/* 书单:想读/在读/读完 记录,支持编辑(localStorage 持久化) */
 const BOOK_STATUSES = [
   { k: 'wish',    label: '想读' },
   { k: 'reading', label: '在读' },
   { k: 'done',    label: '读完' }
 ];
 let _bookFilter = 'all';
+let _bookEditingId = null;
+
+function _bookResetEdit() {
+  _bookEditingId = null;
+  const title = $('#book-title');
+  const add = $('#book-add');
+  const cancel = $('#book-cancel');
+  if (title) title.value = '';
+  const author = $('#book-author');
+  if (author) author.value = '';
+  if (add) add.textContent = '添加';
+  if (cancel) cancel.style.display = 'none';
+}
 
 function loadBooks() {
   const list = Store.get(Store.KEYS.BOOKS, []);
@@ -29,7 +42,8 @@ function loadBooks() {
     li.innerHTML = `
       <div class="note-title">📗 ${escapeHtml(b.title)}${b.author ? `<span style="color:var(--text-secondary);font-size:12px;"> · ${escapeHtml(b.author)}</span>` : ''}</div>
       <span class="project-tag status-${si}">${BOOK_STATUSES[si].label}</span>
-      <button class="fav-delete" data-id="${b.id}" title="删除">✕</button>
+      <button class="fav-delete book-edit" data-id="${b.id}" title="编辑">✎</button>
+      <button class="fav-delete book-del" data-id="${b.id}" title="删除">✕</button>
     `;
     li.querySelector('.project-tag').addEventListener('click', () => {
       const books = Store.get(Store.KEYS.BOOKS, []);
@@ -52,23 +66,37 @@ function initBooks() {
   add.addEventListener('click', () => {
     const t = title.value.trim();
     if (!t) {
-      alert('先写上书名吧~');
+      alert(_bookEditingId ? '书名不能为空~' : '先写上书名吧~');
       return;
     }
     const books = Store.get(Store.KEYS.BOOKS, []);
-    books.unshift({
-      id: uid(),
-      title: t,
-      author: $('#book-author').value.trim(),
-      status: $('#book-status').value || 'reading',
-      createdAt: Date.now()
-    });
-    Store.set(Store.KEYS.BOOKS, books);
-    title.value = '';
-    $('#book-author').value = '';
+    if (_bookEditingId) {
+      const item = books.find(x => x.id === _bookEditingId);
+      if (item) {
+        item.title = t;
+        item.author = $('#book-author').value.trim();
+        item.status = $('#book-status').value || 'reading';
+      }
+      Store.set(Store.KEYS.BOOKS, books);
+      _bookResetEdit();
+    } else {
+      books.unshift({
+        id: uid(),
+        title: t,
+        author: $('#book-author').value.trim(),
+        status: $('#book-status').value || 'reading',
+        createdAt: Date.now()
+      });
+      Store.set(Store.KEYS.BOOKS, books);
+      title.value = '';
+      $('#book-author').value = '';
+    }
     loadBooks();
   });
   title.addEventListener('keydown', e => { if (e.key === 'Enter') add.click(); });
+
+  const cancel = $('#book-cancel');
+  if (cancel) cancel.addEventListener('click', _bookResetEdit);
 
   const filters = $('#book-filters');
   if (filters) {
@@ -85,10 +113,21 @@ function initBooks() {
   const ul = $('#book-list');
   if (ul) {
     ul.addEventListener('click', e => {
-      if (e.target.classList.contains('fav-delete')) {
-        const id = e.target.dataset.id;
-        const books = Store.get(Store.KEYS.BOOKS, []).filter(x => x.id !== id);
-        Store.set(Store.KEYS.BOOKS, books);
+      const id = e.target.dataset.id;
+      if (!id) return;
+      if (e.target.classList.contains('book-edit')) {
+        const b = Store.get(Store.KEYS.BOOKS, []).find(x => x.id === id);
+        if (!b) return;
+        _bookEditingId = id;
+        title.value = b.title;
+        $('#book-author').value = b.author || '';
+        $('#book-status').value = b.status;
+        add.textContent = '保存修改';
+        cancel.style.display = '';
+        title.focus();
+      } else if (e.target.classList.contains('book-del')) {
+        if (_bookEditingId === id) _bookResetEdit();
+        Store.set(Store.KEYS.BOOKS, Store.get(Store.KEYS.BOOKS, []).filter(x => x.id !== id));
         loadBooks();
       }
     });
