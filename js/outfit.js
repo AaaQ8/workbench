@@ -81,6 +81,97 @@ function initOutfit() {
   }
 
   loadOutfit();
+  initProfile();
+}
+
+/* ============ 我的特征档案 → 生成定制穿搭/美妆视频搜索 ============ */
+const PROFILE_FIELDS = [
+  { id: 'body',     label: '体型', opts: ['梨形身材', '苹果型身材', 'H型身材', '沙漏型身材', '倒三角身材', '直筒型身材'] },
+  { id: 'skin',     label: '肤色', opts: ['冷白皮', '暖黄皮', '自然肤色', '小麦色', '黄黑皮'] },
+  { id: 'style',    label: '风格', opts: ['通勤风', '甜酷风', '复古风', '温柔风', '极简风', '运动风'] },
+  { id: 'face',     label: '脸型', opts: ['圆脸', '方脸', '鹅蛋脸', '心形脸', '长脸'] },
+  { id: 'skinType', label: '肤质', opts: ['干皮', '油皮', '混合皮', '敏感肌'] }
+];
+
+function _profileSearchHtml(kw) {
+  const enc = encodeURIComponent(kw);
+  return `
+    <a class="resource-item" href="https://www.douyin.com/search/${enc}?type=video" target="_blank" rel="noopener">
+      <div class="resource-icon">📱</div>
+      <div>
+        <div class="resource-title">抖音 · ${escapeHtml(kw)}</div>
+        <div class="resource-desc">短视频搜索(手机跳转App)</div>
+      </div>
+    </a>
+    <a class="resource-item" href="https://search.bilibili.com/all?keyword=${enc}" target="_blank" rel="noopener">
+      <div class="resource-icon">📺</div>
+      <div>
+        <div class="resource-title">B站 · ${escapeHtml(kw)}</div>
+        <div class="resource-desc">长视频教学更系统</div>
+      </div>
+    </a>`;
+}
+
+function _profileKeywords() {
+  const p = Store.get(Store.KEYS.BEAUTY_PROFILE, {});
+  const outfitKws = [];
+  const makeupKws = [];
+  if (p.body)  outfitKws.push(p.body + '穿搭');
+  if (p.style) outfitKws.push(p.style + '穿搭');
+  if (p.skin)  outfitKws.push(p.skin + '穿搭显白');
+  if (p.skinType) makeupKws.push(p.skinType + '护肤', p.skinType + '粉底');
+  if (p.face)  makeupKws.push(p.face + '修容', p.face + '适合的发型');
+  if (p.skin)  makeupKws.push(p.skin + '口红颜色');
+  return {
+    outfit: [...new Set(outfitKws.filter(Boolean))],
+    makeup: [...new Set(makeupKws.filter(Boolean))]
+  };
+}
+
+function renderProfileLinks() {
+  const kws = _profileKeywords();
+  const outfitBox = $('#profile-links');
+  const makeupBox = $('#makeup-profile-links');
+  if (outfitBox) {
+    outfitBox.innerHTML = kws.outfit.length
+      ? kws.outfit.map(_profileSearchHtml).join('')
+      : '<div class="note-item">还没保存特征,先在上方选择并保存,这里会生成你的专属穿搭视频入口~</div>';
+  }
+  if (makeupBox) {
+    makeupBox.innerHTML = kws.makeup.length
+      ? kws.makeup.map(_profileSearchHtml).join('')
+      : '<div class="note-item">去「穿搭 → 我的特征档案」保存肤质/脸型,这里就会生成专属美妆教程入口~</div>';
+  }
+}
+
+function initProfile() {
+  const form = $('#profile-form');
+  if (!form) return;
+  const saved = Store.get(Store.KEYS.BEAUTY_PROFILE, {});
+  form.innerHTML = PROFILE_FIELDS.map(f => `
+    <div class="setting-row">
+      <label>${f.label}:</label>
+      <select id="profile-${f.id}" style="flex:1;">
+        <option value="">未设置</option>
+        ${f.opts.map(o => `<option value="${o}"${saved[f.id] === o ? ' selected' : ''}>${o}</option>`).join('')}
+      </select>
+    </div>`).join('');
+  $('#profile-save').addEventListener('click', () => {
+    const data = {};
+    PROFILE_FIELDS.forEach(f => {
+      const v = $('#profile-' + f.id).value;
+      if (v) data[f.id] = v;
+    });
+    if (!Object.keys(data).length) {
+      $('#profile-msg').textContent = '至少选一项再保存~';
+      return;
+    }
+    Store.set(Store.KEYS.BEAUTY_PROFILE, data);
+    $('#profile-msg').textContent = '已保存 ✓';
+    setTimeout(() => { $('#profile-msg').textContent = ''; }, 1500);
+    renderProfileLinks();
+  });
+  renderProfileLinks();
 }
 
 if (typeof window !== 'undefined') window.initOutfit = initOutfit;
