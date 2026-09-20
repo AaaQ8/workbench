@@ -327,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
   safeInit('law',       typeof window.initLaw       !== 'undefined' ? window.initLaw       : null);
   safeInit('wellness',  typeof window.initWellness  !== 'undefined' ? window.initWellness  : null);
   safeInit('books',     typeof window.initBooks     !== 'undefined' ? window.initBooks     : null);
+  safeInit('phone',     typeof window.initPhone     !== 'undefined' ? window.initPhone     : null);
   safeInit('outfit',    typeof window.initOutfit    !== 'undefined' ? window.initOutfit    : null);
   safeInit('makeup',    typeof window.initMakeup    !== 'undefined' ? window.initMakeup    : null);
   safeInit('finance',   typeof window.initFinance   !== 'undefined' ? window.initFinance   : null);
