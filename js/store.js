@@ -29,7 +29,9 @@ const Store = {
     OUTFIT_WEEK: 'pw_outfit_week',
     BEAUTY_PROFILE: 'pw_beauty_profile',
     BOOKS: 'pw_books',
-    PHONE_FILES: 'pw_phone_files'
+    PHONE_FILES: 'pw_phone_files',
+    TIMETABLE: 'pw_timetable',
+    PLANNER: 'pw_planner_tasks'
   },
 
   get(key, def) {
