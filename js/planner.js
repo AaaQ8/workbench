@@ -1,6 +1,8 @@
-/* 每日计划(GoalDay 式):时间安排 + 打卡 + 连续天数 + 7天完成率图表 */
+/* 每日计划(GoalDay 式):时间安排 + 打卡 + 连续天数 + 7天完成率图表 + 到点提醒 */
 let _plFilter = 'today';
 let _plChart = null;
+let _plReminderOn = false;
+let _plLastFired = {}; // taskId -> minuteKey "YYYY-MM-DD HH:MM",防同分钟内重复触发
 
 function _plToday() {
   const now = new Date();
@@ -194,7 +196,126 @@ function initPlanner() {
     });
   }
 
+  _plInitReminder();
   renderPlanner();
+}
+
+/* ===== 任务提醒(到点弹通知 + 蜂鸣声) ===== */
+function _plInitReminder() {
+  const toggleBtn = $('#pl-reminder-toggle');
+  const statusEl = $('#pl-reminder-status');
+  // 初始化按钮文字
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    _plReminderOn = true;
+    if (statusEl) statusEl.textContent = '已开启 ✅';
+    if (toggleBtn) toggleBtn.textContent = '关闭提醒';
+  }
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      if (_plReminderOn) {
+        _plReminderOn = false;
+        if (statusEl) statusEl.textContent = '未开启';
+        toggleBtn.textContent = '开启提醒';
+        return;
+      }
+      // 请求权限
+      const proceed = () => {
+        _plReminderOn = true;
+        if (statusEl) statusEl.textContent = '已开启 ✅';
+        toggleBtn.textContent = '关闭提醒';
+        showToast('🔔 提醒已开启,到点会弹通知');
+      };
+      if (typeof Notification === 'undefined') {
+        // 不支持通知 API 的浏览器,只走声音提醒
+        proceed();
+        return;
+      }
+      if (Notification.permission === 'granted') {
+        proceed();
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(p => {
+          if (p === 'granted') proceed();
+          else {
+            // 用户拒绝通知,仍然开启声音提醒
+            _plReminderOn = true;
+            if (statusEl) statusEl.textContent = '已开启(无系统通知,仅声音) 🔕';
+            toggleBtn.textContent = '关闭提醒';
+            showToast('系统通知未授权,仍会用声音提醒');
+          }
+        });
+      } else {
+        // 已被拒绝
+        _plReminderOn = true;
+        if (statusEl) statusEl.textContent = '已开启(系统通知被拒,仅声音) 🔕';
+        toggleBtn.textContent = '关闭提醒';
+        showToast('系统通知被拒,仍会用声音提醒');
+      }
+    });
+  }
+  // 启动轮询
+  setInterval(_plReminderTick, 20000); // 每 20 秒检查一次
+  _plReminderTick();
+}
+
+function _plBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+    osc.start();
+    osc.stop(ctx.currentTime + 1.3);
+    // 三声短促蜂鸣
+    setTimeout(() => {
+      const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
+      const o2 = ctx2.createOscillator(), g2 = ctx2.createGain();
+      o2.connect(g2); g2.connect(ctx2.destination);
+      o2.type = 'sine'; o2.frequency.value = 880;
+      g2.gain.setValueAtTime(0.001, ctx2.currentTime);
+      g2.gain.exponentialRampToValueAtTime(0.3, ctx2.currentTime + 0.05);
+      g2.gain.exponentialRampToValueAtTime(0.001, ctx2.currentTime + 1.0);
+      o2.start(); o2.stop(ctx2.currentTime + 1.1);
+    }, 1400);
+  } catch (e) { /* AudioContext 不可用时静默 */ }
+}
+
+function _plReminderTick() {
+  if (!_plReminderOn) return;
+  const tasks = Store.get(Store.KEYS.PLANNER, []);
+  const today = _plToday();
+  const now = new Date();
+  const nowHH = String(now.getHours()).padStart(2, '0');
+  const nowMM = String(now.getMinutes()).padStart(2, '0');
+  const nowTime = `${nowHH}:${nowMM}`;
+  let fired = false;
+  tasks.forEach(t => {
+    if (t.done) return;
+    if (t.date !== today) return;
+    if (!t.time || t.time.length < 5) return;
+    if (t.time !== nowTime) return;
+    const minuteKey = `${today} ${nowTime}`;
+    if (_plLastFired[t.id] === minuteKey) return; // 本分钟已提醒过
+    _plLastFired[t.id] = minuteKey;
+    fired = true;
+    // 弹通知
+    try {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        const n = new Notification('⏰ 任务提醒', {
+          body: `${t.time} ${t.text}${t.cat ? ' [' + t.cat + ']' : ''}`,
+          tag: 'pl-' + t.id
+        });
+        n.onclick = () => { window.focus(); n.close(); };
+      }
+    } catch (e) {}
+    // 页内 toast
+    showToast(`⏰ ${t.time} · ${t.text}`);
+  });
+  if (fired) _plBeep();
 }
 
 if (typeof window !== 'undefined') window.initPlanner = initPlanner;
