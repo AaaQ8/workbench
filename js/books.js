@@ -37,13 +37,19 @@ function loadBooks() {
   shown.forEach(b => {
     const si = Math.max(0, BOOK_STATUSES.findIndex(s => s.k === b.status));
     const li = document.createElement('li');
-    li.className = 'note-item';
+    li.className = 'note-item book-item';
     li.dataset.id = b.id;
+    const hasNote = b.note && b.note.trim();
     li.innerHTML = `
       <div class="note-title">📗 ${escapeHtml(b.title)}${b.author ? `<span style="color:var(--text-secondary);font-size:12px;"> · ${escapeHtml(b.author)}</span>` : ''}</div>
       <span class="project-tag status-${si}">${BOOK_STATUSES[si].label}</span>
+      <button class="fav-delete book-note-btn" data-id="${b.id}" title="读书心得">${hasNote ? '📝' : '✍️'}</button>
       <button class="fav-delete book-edit" data-id="${b.id}" title="编辑">✎</button>
       <button class="fav-delete book-del" data-id="${b.id}" title="删除">✕</button>
+      ${hasNote ? `<div class="book-note-preview">${escapeHtml(b.note.slice(0, 60))}${b.note.length > 60 ? '…' : ''}</div>` : ''}
+      <div class="book-note-box" style="display:none;">
+        <textarea class="book-note-textarea" placeholder="写下你的读书心得..." data-id="${b.id}">${escapeHtml(b.note || '')}</textarea>
+      </div>
     `;
     li.querySelector('.project-tag').addEventListener('click', () => {
       const books = Store.get(Store.KEYS.BOOKS, []);
@@ -56,6 +62,19 @@ function loadBooks() {
     });
     ul.appendChild(li);
   });
+}
+
+// 心得防抖保存
+const _bookNoteTimer = {};
+function _bookSaveNote(id, text) {
+  clearTimeout(_bookNoteTimer[id]);
+  _bookNoteTimer[id] = setTimeout(() => {
+    const books = Store.get(Store.KEYS.BOOKS, []);
+    const item = books.find(x => x.id === id);
+    if (!item) return;
+    item.note = text;
+    Store.set(Store.KEYS.BOOKS, books);
+  }, 400);
 }
 
 function initBooks() {
@@ -115,7 +134,20 @@ function initBooks() {
     ul.addEventListener('click', e => {
       const id = e.target.dataset.id;
       if (!id) return;
-      if (e.target.classList.contains('book-edit')) {
+      if (e.target.classList.contains('book-note-btn')) {
+        const li = e.target.closest('.book-item');
+        if (!li) return;
+        const box = li.querySelector('.book-note-box');
+        const preview = li.querySelector('.book-note-preview');
+        if (!box) return;
+        const open = box.style.display === 'none';
+        box.style.display = open ? 'block' : 'none';
+        if (preview) preview.style.display = open ? 'none' : '';
+        if (open) {
+          const ta = box.querySelector('textarea');
+          if (ta) ta.focus();
+        }
+      } else if (e.target.classList.contains('book-edit')) {
         const b = Store.get(Store.KEYS.BOOKS, []).find(x => x.id === id);
         if (!b) return;
         _bookEditingId = id;
@@ -130,6 +162,12 @@ function initBooks() {
         Store.set(Store.KEYS.BOOKS, Store.get(Store.KEYS.BOOKS, []).filter(x => x.id !== id));
         loadBooks();
       }
+    });
+    // 心得输入防抖保存
+    ul.addEventListener('input', e => {
+      const ta = e.target.closest('.book-note-textarea');
+      if (!ta) return;
+      _bookSaveNote(ta.dataset.id, ta.value);
     });
   }
 
