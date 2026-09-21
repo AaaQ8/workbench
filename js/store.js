@@ -29,10 +29,14 @@ const Store = {
     CET_SCORES: 'pw_cet_scores',
     EDIT_PROJECTS: 'pw_edit_projects',
     OUTFIT_WEEK: 'pw_outfit_week',
+    WARDROBE: 'pw_wardrobe',
+    RESUME: 'pw_resume',
+    EXPRESS_RECORDINGS: 'pw_express_recordings',
     BEAUTY_PROFILE: 'pw_beauty_profile',
     BOOKS: 'pw_books',
     PHONE_FILES: 'pw_phone_files',
     TIMETABLE: 'pw_timetable',
+    TT_PERIODS: 'pw_tt_periods',
     PLANNER: 'pw_planner_tasks'
   },
 
