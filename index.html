@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>个人工作台</title>
-  <link rel="stylesheet" href="css/style.css?v=8" />
+  <link rel="stylesheet" href="css/style.css?v=9" />
   <!-- PWA:手机「添加到主屏幕」后可全屏像 App 一样使用 -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d0d0f" />
@@ -960,9 +960,13 @@
         <div class="card">
           <h3 class="card-title" id="tt-today-title">📍 今天</h3>
           <div id="tt-today-list" class="note-list" style="margin-bottom:10px;"></div>
-          <h3 class="card-title" style="font-size:15px;">🗓 一周课表(点课程可删除)</h3>
+          <div class="tt-week-nav">
+            <button id="tt-prev-week" class="btn-ghost">◀ 上一周</button>
+            <h3 class="card-title" id="tt-week-title" style="font-size:15px;margin:0;">🗓 第 1 周</h3>
+            <button id="tt-next-week" class="btn-ghost">下一周 ▶</button>
+          </div>
           <div id="tt-grid" class="tt-grid"></div>
-          <p class="smart-tip">💡 高亮列是今天;课程颜色按课名自动分配</p>
+          <p class="smart-tip">💡 高亮列是今天;点课程可删除;左右滑动或点箭头切换周次</p>
         </div>
       </section>
 
@@ -1129,12 +1133,12 @@
         </div>
         <div class="card">
           <h3 class="card-title">🗂️ 我的爱用品</h3>
-          <ul class="media-list">
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=YSL%20%E5%94%87%E9%87%89%20%E6%B5%8B%E8%AF%84" target="_blank" rel="noopener noreferrer">💄 YSL 唇釉 #12 <span class="tag">温柔挂</span></a>
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=NARS%20%E8%85%AE%E7%BA%A2%20Orgasm%20%E6%B5%8B%E8%AF%84" target="_blank" rel="noopener noreferrer">🖌️ NARS 腮红 #Orgasm <span class="tag">万能色</span></a>
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=3CE%20Overtake%20%E7%9C%BC%E5%BD%B1%20%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer">👁️ 3CE 眼影盘 #Overtake <span class="tag">日常</span></a>
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=Charlotte%20Tilbury%20%E9%AB%98%E5%85%89%20%E6%B5%8B%E8%AF%84" target="_blank" rel="noopener noreferrer">✨ Charlotte Tilbury 高光 <span class="tag">水光肌</span></a>
-          </ul>
+          <div class="study-input-wrap">
+            <input type="text" id="makeup-fav-input" placeholder="输入爱用品名,如:YSL 唇釉 #12" />
+            <button id="makeup-fav-add" class="btn-primary">添加</button>
+          </div>
+          <ul id="makeup-fav-list" class="media-list"></ul>
+          <p class="smart-tip">💡 点击条目可直达 B站搜索评测,点 ✕ 删除</p>
         </div>
         <div class="card">
           <h3 class="card-title">🧬 按我的特征找教程</h3>
@@ -1684,11 +1688,11 @@
           <h3 class="card-title">🎵 专注白噪音</h3>
           <div class="noise-grid">
             <div class="noise-item" data-sound="rain">🌧️ 雨声</div>
-            <div class="noise-item" data-sound="waves">🌊 海浪</div>
-            <div class="noise-item" data-sound="fire">🔥 篝火</div>
-            <div class="noise-item" data-sound="cafe">🍵 咖啡馆</div>
             <div class="noise-item" data-sound="forest">🌲 森林</div>
-            <div class="noise-item" data-sound="typhoon">🌀 台风</div>
+            <div class="noise-item" data-sound="stream">💧 溪流</div>
+            <div class="noise-item" data-sound="meditation">🕉️ 冥想钵</div>
+            <div class="noise-item" data-sound="fan">🌀 风扇</div>
+            <div class="noise-item" data-sound="night">🦗 深夜</div>
           </div>
           <p class="smart-tip">💡 点击播放真实环境音(本地合成,无需联网),再点一次停止</p>
         </div>
@@ -1858,7 +1862,7 @@
   <!-- 脚本加载顺序(?v=6 用于破缓存) -->
   <script src="js/chart.umd.min.js?v=1"></script>
   <script src="js/marked.min.js?v=1"></script>
-  <script src="js/store.js?v=12"></script>
+  <script src="js/store.js?v=13"></script>
   <script src="js/meta.js?v=4"></script>
   <script src="js/goals.js?v=4"></script>
   <script src="js/knowledge.js?v=6"></script>
@@ -1866,15 +1870,15 @@
   <script src="js/sing.js?v=5"></script>
   <script src="js/study.js?v=4"></script>
   <script src="js/english.js?v=6"></script>
-  <script src="js/express.js?v=5"></script>
+  <script src="js/express.js?v=6"></script>
   <script src="js/law.js?v=4"></script>
   <script src="js/wellness.js?v=1"></script>
   <script src="js/books.js?v=2"></script>
   <script src="js/phone.js?v=2"></script>
-  <script src="js/timetable.js?v=2"></script>
+  <script src="js/timetable.js?v=3"></script>
   <script src="js/planner.js?v=3"></script>
   <script src="js/outfit.js?v=8"></script>
-  <script src="js/makeup.js?v=5"></script>
+  <script src="js/makeup.js?v=6"></script>
   <script src="js/finance.js?v=6"></script>
   <script src="js/news.js?v=4"></script>
   <script src="js/podcast.js?v=4"></script>
@@ -1885,11 +1889,11 @@
   <script src="js/resume.js?v=1"></script>
   <script src="js/focus.js?v=5"></script>
   <script src="js/money.js?v=4"></script>
-  <script src="js/noise.js?v=1"></script>
+  <script src="js/noise.js?v=2"></script>
   <script src="js/qrcode.min.js?v=1"></script>
   <script src="js/ai.js?v=4"></script>
   <script src="js/settings.js?v=5"></script>
-  <script src="js/main.js?v=10"></script>
+  <script src="js/main.js?v=11"></script>
 
 </body>
 </html>
