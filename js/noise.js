@@ -67,54 +67,60 @@ function _gain(ctx, v) {
   return g;
 }
 
-function _crackle(ctx, out, buffer) {
-  // 篝火噼啪:随机短促高通噪声爆点
-  const tick = () => {
-    if (_noise.current !== 'fire') return;
-    const src = ctx.createBufferSource();
-    src.buffer = buffer;
-    const bp = ctx.createBiquadFilter();
-    bp.type = 'bandpass';
-    bp.frequency.value = 1500 + Math.random() * 3000;
-    bp.Q.value = 2;
-    const g = ctx.createGain();
-    const now = ctx.currentTime;
-    const vol = 0.08 + Math.random() * 0.25;
-    g.gain.setValueAtTime(vol, now);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 0.04 + Math.random() * 0.08);
-    src.connect(bp); bp.connect(g); g.connect(out);
-    src.start(now);
-    src.stop(now + 0.15);
-  };
-  _noise.timers.push(setInterval(tick, 90));
-}
-
-function _clink(ctx, out) {
-  // 咖啡馆杯勺轻碰
-  const tick = () => {
-    if (_noise.current !== 'cafe') return;
+function _cricket(ctx, out) {
+  // 深夜虫鸣:高频短促颤音
+  const chirp = () => {
+    if (_noise.current !== 'night') return;
     const osc = ctx.createOscillator();
-    osc.type = 'triangle';
-    const base = 1400 + Math.random() * 1400;
+    osc.type = 'sine';
     const now = ctx.currentTime;
+    const f0 = 4200 + Math.random() * 800;
+    osc.frequency.setValueAtTime(f0, now);
+    osc.frequency.setValueAtTime(f0 * 1.04, now + 0.03);
+    osc.frequency.setValueAtTime(f0, now + 0.06);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(0.06 + Math.random() * 0.05, now + 0.005);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
-    osc.frequency.setValueAtTime(base, now);
-    osc.frequency.exponentialRampToValueAtTime(base * 1.3, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.03 + Math.random() * 0.02, now + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
     osc.connect(g); g.connect(out);
     osc.start(now);
-    osc.stop(now + 0.3);
+    osc.stop(now + 0.1);
   };
-  _noise.timers.push(setInterval(tick, 10));
-  // 用随机 setTimeout 排程更自然
   const sched = () => {
-    if (_noise.current !== 'cafe') return;
-    tick();
-    _noise.timers.push(setTimeout(sched, 2500 + Math.random() * 6000));
+    if (_noise.current !== 'night') return;
+    const n = 2 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < n; i++) setTimeout(chirp, i * 150);
+    _noise.timers.push(setTimeout(sched, 1200 + Math.random() * 4000));
   };
-  _noise.timers.push(setTimeout(sched, 1000));
+  _noise.timers.push(setTimeout(sched, 600));
+}
+
+function _bowl(ctx, out) {
+  // 冥想钵:低沉正弦长音 + 偶发高频泛音
+  const playBowl = () => {
+    if (_noise.current !== 'meditation') return;
+    const now = ctx.currentTime;
+    const base = 196 + Math.random() * 30; // G3 附近
+    [base, base * 2, base * 3].forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = i === 0 ? 'sine' : 'triangle';
+      osc.frequency.value = f;
+      const g = ctx.createGain();
+      const peak = i === 0 ? 0.12 : (0.04 - i * 0.012);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(peak, now + 0.1 + i * 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 4 + i);
+      osc.connect(g); g.connect(out);
+      osc.start(now);
+      osc.stop(now + 5 + i);
+    });
+  };
+  const sched = () => {
+    if (_noise.current !== 'meditation') return;
+    playBowl();
+    _noise.timers.push(setTimeout(sched, 6000 + Math.random() * 4000));
+  };
+  _noise.timers.push(setTimeout(sched, 200));
 }
 
 function _bird(ctx, out) {
@@ -170,33 +176,32 @@ function startNoise(kind) {
       src.connect(hp); hp.connect(lp); lp.connect(g); g.connect(master);
       break;
     }
-    case 'waves': {
-      // 海浪:棕噪 + 慢速大幅起伏
-      const src = _source(ctx, brown);
-      const lp = _filter(ctx, 'lowpass', 600);
-      const g = _gain(ctx, 0.25);
-      _lfo(ctx, g.gain, 0.11, 0.22);
-      src.connect(lp); lp.connect(g); g.connect(master);
+    case 'stream': {
+      // 溪流:白噪 + 带通(中高频) + 轻微起伏,清亮流水感
+      const src = _source(ctx, white);
+      const bp = _filter(ctx, 'bandpass', 1800, 0.8);
+      const hp = _filter(ctx, 'highpass', 800);
+      const g = _gain(ctx, 0.22);
+      _lfo(ctx, g.gain, 0.2, 0.08);
+      src.connect(hp); hp.connect(bp); bp.connect(g); g.connect(master);
       break;
     }
-    case 'fire': {
-      // 篝火:低频棕噪底 + 随机噼啪
+    case 'meditation': {
+      // 冥想钵:极轻底噪 + 偶发钵音
       const src = _source(ctx, brown);
-      const lp = _filter(ctx, 'lowpass', 320);
-      const g = _gain(ctx, 0.5);
-      _lfo(ctx, g.gain, 0.4, 0.12);
+      const lp = _filter(ctx, 'lowpass', 200);
+      const g = _gain(ctx, 0.06);
       src.connect(lp); lp.connect(g); g.connect(master);
-      _crackle(ctx, master, white);
+      _bowl(ctx, master);
       break;
     }
-    case 'cafe': {
-      // 咖啡馆:低沉人声嗡嗡 + 偶发杯勺碰响
+    case 'fan': {
+      // 风扇:棕噪 + 带通(中频) + 稳定小幅起伏
       const src = _source(ctx, brown);
-      const lp = _filter(ctx, 'lowpass', 480);
-      const g = _gain(ctx, 0.45);
-      _lfo(ctx, g.gain, 0.06, 0.1);
-      src.connect(lp); lp.connect(g); g.connect(master);
-      _clink(ctx, master);
+      const bp = _filter(ctx, 'bandpass', 500, 0.5);
+      const g = _gain(ctx, 0.4);
+      _lfo(ctx, g.gain, 0.5, 0.06);
+      src.connect(bp); bp.connect(g); g.connect(master);
       break;
     }
     case 'forest': {
@@ -209,14 +214,13 @@ function startNoise(kind) {
       _bird(ctx, master);
       break;
     }
-    case 'typhoon': {
-      // 台风:呼啸风声,滤镜频率与音量一起起伏
+    case 'night': {
+      // 深夜:极轻低频底噪 + 虫鸣
       const src = _source(ctx, brown);
-      const lp = _filter(ctx, 'lowpass', 400);
-      const g = _gain(ctx, 0.5);
-      _lfo(ctx, g.gain, 0.05, 0.35);
-      _lfo(ctx, lp.frequency, 0.07, 250);
+      const lp = _filter(ctx, 'lowpass', 280);
+      const g = _gain(ctx, 0.12);
       src.connect(lp); lp.connect(g); g.connect(master);
+      _cricket(ctx, master);
       break;
     }
   }
