@@ -547,6 +547,7 @@ function initApp() {
   safeInit('knowledge', typeof window.initKnowledge !== 'undefined' ? window.initKnowledge : null);
   safeInit('dance',     typeof window.initDance     !== 'undefined' ? window.initDance     : null);
   safeInit('sing',      typeof window.initSing      !== 'undefined' ? window.initSing      : null);
+  safeInit('singPlaylist',typeof window.initSingPlaylist!== 'undefined' ? window.initSingPlaylist: null);
   safeInit('study',     typeof window.initStudy     !== 'undefined' ? window.initStudy     : null);
   safeInit('english',   typeof window.initEnglish   !== 'undefined' ? window.initEnglish   : null);
   safeInit('express',   typeof window.initExpress   !== 'undefined' ? window.initExpress   : null);
