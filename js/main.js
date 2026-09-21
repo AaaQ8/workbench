@@ -88,28 +88,169 @@ function formatTimeLeft(ms) {
   };
 }
 
-function startCountdown() {
-  const cd = Store.get(Store.KEYS.COUNTDOWN, { name: '', date: null });
-  const dEl = $('#cd-days'), hEl = $('#cd-hours'), mEl = $('#cd-min'), sEl = $('#cd-sec');
-  const nEl = $('#cd-name');
-  if (!dEl) return;
+function _cdFmt(ms) {
+  const abs = Math.abs(ms);
+  const total = Math.floor(abs / 1000);
+  return {
+    days:  String(Math.floor(total / 86400)).padStart(2, '0'),
+    hours: String(Math.floor((total % 86400) / 3600)).padStart(2, '0'),
+    min:   String(Math.floor((total % 3600) / 60)).padStart(2, '0'),
+    sec:   String(total % 60).padStart(2, '0')
+  };
+}
 
-  if (!cd.date) {
-    dEl.textContent = hEl.textContent = mEl.textContent = sEl.textContent = '00';
-    if (nEl) nEl.textContent = '设置一个倒计时目标吧 →';
+function _cdMigrate() {
+  let cur = Store.get(Store.KEYS.COUNTDOWN, []);
+  if (Array.isArray(cur)) return cur;
+  // 兼容旧格式 { name, date }
+  if (cur && cur.name && cur.date) {
+    const arr = [{ id: uid(), name: cur.name, date: cur.date, createdAt: Date.now() }];
+    Store.set(Store.KEYS.COUNTDOWN, arr);
+    return arr;
+  }
+  Store.set(Store.KEYS.COUNTDOWN, []);
+  return [];
+}
+
+function _cdRenderList() {
+  const container = $('#cd-list');
+  const emptyMsg = $('#cd-empty');
+  if (!container) return;
+  const arr = _cdMigrate();
+  if (!arr.length) {
+    container.innerHTML = '';
+    if (emptyMsg) emptyMsg.style.display = '';
     return;
   }
-  const target = new Date(cd.date).getTime();
-  const tick = () => {
-    const left = formatTimeLeft(target - Date.now());
-    dEl.textContent = left.days;
-    hEl.textContent = left.hours;
-    mEl.textContent = left.min;
-    sEl.textContent = left.sec;
-    if (nEl) nEl.textContent = cd.name ? `目标:${cd.name}` : '';
-  };
+  if (emptyMsg) emptyMsg.style.display = 'none';
+  const now = Date.now();
+  // 即将到来按日期升序,过期按日期降序
+  const upcoming = arr.filter(c => new Date(c.date).getTime() >= now).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const past = arr.filter(c => new Date(c.date).getTime() < now).sort((a, b) => new Date(b.date) - new Date(a.date));
+  const ordered = [...upcoming, ...past];
+  container.innerHTML = '';
+  ordered.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'cd-card';
+    card.dataset.id = c.id;
+    const targetTs = new Date(c.date).getTime();
+    const dateStr = new Date(c.date).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    card.innerHTML = `
+      <div class="cd-card-top">
+        <span class="cd-card-name">${escapeHtml(c.name)}</span>
+        <button class="cd-del" data-id="${c.id}" title="删除">✕</button>
+      </div>
+      <div class="cd-card-body">
+        <div class="cd-days-block">
+          <span class="cd-days-num" data-target="${targetTs}">00</span>
+          <span class="cd-days-label">天</span>
+        </div>
+        <div class="cd-hms">
+          <span class="cd-hms-num" data-cd-hms="h">00</span><span class="cd-hms-sep">:</span><span class="cd-hms-num" data-cd-hms="m">00</span><span class="cd-hms-sep">:</span><span class="cd-hms-num" data-cd-hms="s">00</span>
+        </div>
+      </div>
+      <div class="cd-card-date">${new Date(c.date).getTime() < now ? '已过 ' : ''}${dateStr}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function _cdRenderManageList() {
+  const ul = $('#cd-manage-list');
+  if (!ul) return;
+  const arr = _cdMigrate();
+  ul.innerHTML = '';
+  if (!arr.length) {
+    const li = document.createElement('li');
+    li.className = 'note-item';
+    li.textContent = '还没有倒数日,在上方添加一个吧~';
+    ul.appendChild(li);
+    return;
+  }
+  // 按日期升序排列
+  const sorted = [...arr].sort((a, b) => new Date(a.date) - new Date(b.date));
+  sorted.forEach(c => {
+    const li = document.createElement('li');
+    li.className = 'note-item cd-manage-item';
+    const dateStr = new Date(c.date).toLocaleDateString('zh-CN');
+    li.innerHTML = `<span>${escapeHtml(c.name)} · ${dateStr}</span><button class="fav-delete" data-id="${c.id}" title="删除">✕</button>`;
+    li.querySelector('button').addEventListener('click', () => {
+      if (confirm(`删除倒数日「${c.name}」?`)) {
+        const cur = _cdMigrate().filter(x => x.id !== c.id);
+        Store.set(Store.KEYS.COUNTDOWN, cur);
+        _cdRenderList();
+        _cdRenderManageList();
+        showToast('已删除');
+      }
+    });
+    ul.appendChild(li);
+  });
+}
+
+function startCountdown() {
+  const container = $('#cd-list');
+  if (!container) return;
+  _cdMigrate();
+  _cdRenderList();
+  _cdRenderManageList();
+
+  // 每秒刷新所有卡片
+  function tick() {
+    const now = Date.now();
+    $$('#cd-list .cd-card').forEach(card => {
+      const daysEl = card.querySelector('.cd-days-num');
+      if (!daysEl) return;
+      const target = parseInt(daysEl.dataset.target, 10);
+      const diff = target - now;
+      const past = diff < 0;
+      const f = _cdFmt(diff);
+      daysEl.textContent = f.days;
+      const spans = card.querySelectorAll('[data-cd-hms]');
+      if (spans.length === 3) {
+        spans[0].textContent = f.hours;
+        spans[1].textContent = f.min;
+        spans[2].textContent = f.sec;
+      }
+      card.classList.toggle('cd-past', past);
+    });
+  }
   tick();
   setInterval(tick, 1000);
+
+  // 卡片上的删除按钮(事件委托)
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.cd-del');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const arr = _cdMigrate();
+    const target = arr.find(x => x.id === id);
+    if (target && confirm(`删除倒数日「${target.name}」?`)) {
+      Store.set(Store.KEYS.COUNTDOWN, arr.filter(x => x.id !== id));
+      _cdRenderList();
+      _cdRenderManageList();
+    }
+  });
+
+  // 设置面板的添加按钮
+  const saveBtn = $('#save-countdown');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      const nameEl = $('#set-cd-name');
+      const dateEl = $('#set-cd-date');
+      const name = nameEl ? nameEl.value.trim() : '';
+      const date = dateEl ? dateEl.value : '';
+      if (!name) { alert('先填目标名称~'); return; }
+      if (!date) { alert('选个目标日期时间~'); return; }
+      const arr = _cdMigrate();
+      arr.push({ id: uid(), name, date: new Date(date).toISOString(), createdAt: Date.now() });
+      if (!Store.set(Store.KEYS.COUNTDOWN, arr)) return;
+      if (nameEl) nameEl.value = '';
+      if (dateEl) dateEl.value = '';
+      _cdRenderList();
+      _cdRenderManageList();
+      showToast('✅ 已添加倒数日');
+    });
+  }
 }
 
 function initTabs() {
@@ -338,6 +479,10 @@ document.addEventListener('DOMContentLoaded', () => {
   safeInit('aistudy',   typeof window.initAistudy   !== 'undefined' ? window.initAistudy   : null);
   safeInit('favorites', typeof window.initFavorites !== 'undefined' ? window.initFavorites : null);
   safeInit('edit',      typeof window.initEdit      !== 'undefined' ? window.initEdit      : null);
+  safeInit('recommend', typeof window.initRecommend !== 'undefined' ? window.initRecommend : null);
+  safeInit('resume',    typeof window.initResume    !== 'undefined' ? window.initResume    : null);
+  safeInit('wardrobe',  typeof window.initWardrobe  !== 'undefined' ? window.initWardrobe  : null);
+  safeInit('expressRec',typeof window.initExpressRec !== 'undefined' ? window.initExpressRec : null);
   safeInit('focus',     typeof window.initFocus     !== 'undefined' ? window.initFocus     : null);
   safeInit('noise',     typeof window.initNoise     !== 'undefined' ? window.initNoise     : null);
   safeInit('money',     typeof window.initMoney     !== 'undefined' ? window.initMoney     : null);
