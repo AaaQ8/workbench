@@ -306,20 +306,15 @@ function _plReminderTick() {
     if (_plLastFired[t.id] === minuteKey) return; // 本分钟已提醒过
     _plLastFired[t.id] = minuteKey;
     fired = true;
-    // 弹通知
-    try {
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        const n = new Notification('⏰ 任务提醒', {
-          body: `${t.time} ${t.text}${t.cat ? ' [' + t.cat + ']' : ''}`,
-          tag: 'pl-' + t.id
-        });
-        n.onclick = () => { window.focus(); n.close(); };
-      }
-    } catch (e) {}
-    // 页内 toast
-    showToast(`⏰ ${t.time} · ${t.text}`);
+    // 弹通知(统一走 Notify 模块)
+    const body = `${t.time} ${t.text}${t.cat ? ' [' + t.cat + ']' : ''}`;
+    if (typeof Notify !== 'undefined') {
+      Notify.push('⏰ 任务提醒', { body, tag: 'pl-' + t.id });
+    } else {
+      showToast(`⏰ ${t.time} · ${t.text}`);
+    }
   });
-  if (fired) _plBeep();
+  if (fired && typeof Notify === 'undefined') _plBeep();
 }
 
 if (typeof window !== 'undefined') window.initPlanner = initPlanner;
