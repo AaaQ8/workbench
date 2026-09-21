@@ -8,7 +8,7 @@
     .readonly-banner{position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(90deg,#ff6b35,#f7b731);color:#fff;text-align:center;padding:6px;font-size:13px;font-weight:bold;}
     body.readonly-mode{padding-top:30px;}
   </style>
-  <link rel="stylesheet" href="css/style.css?v=15" />
+  <link rel="stylesheet" href="css/style.css?v=16" />
   <!-- PWA:手机「添加到主屏幕」后可全屏像 App 一样使用 -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d0d0f" />
@@ -1732,40 +1732,15 @@
       <section class="tab-panel" id="panel-money">
         <div class="card">
           <h3 class="card-title">💡 收入渠道</h3>
-          <div class="income-list">
-            <div class="income-item">
-              <div class="inc-icon">💼</div>
-              <div class="inc-info">
-                <div class="inc-name">主业工资</div>
-                <div class="inc-desc">稳定的被动收入基础</div>
-              </div>
-              <div class="inc-val">¥8000/mo</div>
-            </div>
-            <div class="income-item">
-              <div class="inc-icon">💻</div>
-              <div class="inc-info">
-                <div class="inc-name">技术副业</div>
-                <div class="inc-desc">接外包 / 做产品</div>
-              </div>
-              <div class="inc-val">+¥3000</div>
-            </div>
-            <div class="income-item">
-              <div class="inc-icon">📈</div>
-              <div class="inc-info">
-                <div class="inc-name">投资理财</div>
-                <div class="inc-desc">基金 / 股票 / 债券</div>
-              </div>
-              <div class="inc-val">+¥500</div>
-            </div>
-            <div class="income-item">
-              <div class="inc-icon">✍️</div>
-              <div class="inc-info">
-                <div class="inc-name">内容创作</div>
-                <div class="inc-desc">写作 / 视频 / 课程</div>
-              </div>
-              <div class="inc-val">+¥800</div>
-            </div>
+          <div class="study-input-wrap">
+            <input type="text" id="inc-name" placeholder="渠道名称(如:主业工资)" />
+            <input type="text" id="inc-desc" placeholder="描述(可选)" />
+            <input type="text" id="inc-val" placeholder="金额(如:¥8000/mo)" />
+            <input type="text" id="inc-icon" placeholder="图标(如:💼)" maxlength="4" />
+            <button id="inc-add" class="btn-primary">添加</button>
           </div>
+          <div id="income-list" class="income-list"></div>
+          <p class="smart-tip" id="income-total"></p>
         </div>
         <div class="card">
           <h3 class="card-title">🚀 搞钱想法记录</h3>
@@ -1933,12 +1908,12 @@
   <script src="js/recommend.js?v=1"></script>
   <script src="js/resume.js?v=1"></script>
   <script src="js/focus.js?v=7"></script>
-  <script src="js/money.js?v=4"></script>
+  <script src="js/money.js?v=5"></script>
   <script src="js/noise.js?v=2"></script>
   <script src="js/qrcode.min.js?v=1"></script>
   <script src="js/ai.js?v=4"></script>
   <script src="js/settings.js?v=7"></script>
-  <script src="js/main.js?v=15"></script>
+  <script src="js/main.js?v=16"></script>
 
 </body>
 </html>
