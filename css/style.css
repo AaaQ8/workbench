@@ -940,7 +940,16 @@ select {
   border-radius: 8px;
   font-size: 14px;
   color: var(--text-secondary);
+  transition: background .2s, opacity .2s;
+  min-height: 44px;
 }
+.sing-step.done {
+  opacity: .55;
+  background: var(--bg-hover);
+  text-decoration: line-through;
+}
+.sing-step.done .step-num { background: #4caf50; font-size: 0; }
+.sing-step.done .step-num::after { content: '✓'; font-size: 13px; }
 
 .step-num {
   background: var(--accent);
@@ -1178,6 +1187,13 @@ select {
 .makeup-step .step-num { background: var(--accent); color: #fff; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0; }
 .makeup-step .step-name { font-weight: 600; font-size: 14px; min-width: 70px; }
 .makeup-step .step-desc { font-size: 13px; color: var(--text-muted); }
+.makeup-step.done {
+  opacity: .55;
+  background: var(--bg-hover);
+}
+.makeup-step.done .step-num { background: #4caf50; font-size: 0; }
+.makeup-step.done .step-num::after { content: '✓'; font-size: 13px; }
+.makeup-step.done .step-name { text-decoration: line-through; }
 
 .makeup-grid {
   display: grid;
@@ -1920,3 +1936,52 @@ a.media-item, a.resource-item, a.source-item, a.makeup-card, a.ai-topic, a.news-
 .pl-tag { font-size: 10px; padding: 1px 7px; border-radius: 8px; background: rgba(255, 107, 53, .15); color: var(--accent); }
 .pl-time-overdue { color: #ef4444 !important; font-weight: bold; }
 .pl-star { color: #f7b731; }
+
+/* ===== 全局多端适配 & 性能优化 ===== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  overflow-x: hidden;       /* 防止横向滚动 */
+  -webkit-tap-highlight-color: transparent;  /* 去掉移动端点击高亮 */
+}
+
+/* 触摸友好:所有可点击元素最小触摸区 44x44(移动端) */
+button, .btn-primary, .btn-ghost, .nav-item, .tag-item,
+.sing-step, .makeup-step, .pl-check, .fav-delete,
+.resource-item, .media-item, .news-item, .source-item {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 图片/视频自适应,不溢出容器 */
+img, video, canvas { max-width: 100%; height: auto; }
+
+/* 表格/网格在小屏可横向滚动而非撑破布局 */
+.tt-grid { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* 超小屏(<480px)微调 */
+@media (max-width: 480px) {
+  .content { padding: 12px; }
+  .card { padding: 14px; }
+  .card-title { font-size: 15px; }
+  .study-input-wrap { flex-direction: column; align-items: stretch; }
+  .study-input-wrap > * { width: 100%; margin-bottom: 6px; }
+  .countdown-display { gap: 12px; }
+  .cd-days-num { font-size: 32px; }
+  .btn-primary, .btn-ghost { min-height: 40px; font-size: 14px; }
+  .sing-step, .makeup-step { padding: 12px 10px; }
+  .makeup-grid { grid-template-columns: repeat(2, 1fr); }
+  .wd-gallery { grid-template-columns: repeat(2, 1fr); }
+  .resume-photo-list { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* 平板端(768-1024px)优化 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .content { padding: 20px; }
+  .makeup-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* 宽屏桌面(>1200px)限制内容最大宽度,居中显示 */
+@media (min-width: 1200px) {
+  .content { max-width: 1100px; margin: 0 auto; }
+}
