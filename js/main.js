@@ -560,6 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
   safeInit('aistudy',   typeof window.initAistudy   !== 'undefined' ? window.initAistudy   : null);
   safeInit('favorites', typeof window.initFavorites !== 'undefined' ? window.initFavorites : null);
   safeInit('edit',      typeof window.initEdit      !== 'undefined' ? window.initEdit      : null);
+  safeInit('editVideos',typeof window.initEditVideos!== 'undefined' ? window.initEditVideos: null);
   safeInit('recommend', typeof window.initRecommend !== 'undefined' ? window.initRecommend : null);
   safeInit('resume',    typeof window.initResume    !== 'undefined' ? window.initResume    : null);
   safeInit('wardrobe',  typeof window.initWardrobe  !== 'undefined' ? window.initWardrobe  : null);
