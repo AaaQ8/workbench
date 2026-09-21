@@ -378,9 +378,9 @@ function initQuickNote() {
   if (ta) {
     const saved = Store.get(Store.KEYS.QUICK_NOTE, '');
     if (saved) ta.value = saved;
-    ta.addEventListener('input', () => {
-      Store.set(Store.KEYS.QUICK_NOTE, ta.value);
-    });
+    // 防抖:输入停止 400ms 后才保存,避免每按键都写 localStorage
+    const saveDebounced = debounce(() => Store.set(Store.KEYS.QUICK_NOTE, ta.value), 400);
+    ta.addEventListener('input', saveDebounced);
   }
   if (btn) {
     btn.addEventListener('click', () => {
