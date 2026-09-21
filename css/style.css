@@ -1517,6 +1517,13 @@ a.media-item, a.resource-item, a.source-item, a.makeup-card, a.ai-topic, a.news-
 .inc-name { font-weight: 600; font-size: 14px; }
 .inc-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .inc-val { font-weight: 600; font-size: 13px; color: var(--accent); }
+.inc-del {
+  background: none; border: none; color: var(--text-muted);
+  cursor: pointer; font-size: 16px; padding: 0 4px;
+  opacity: 0; transition: opacity 0.15s;
+}
+.income-item:hover .inc-del { opacity: 1; }
+.inc-del:active { color: var(--danger); }
 
 .money-goal {
   background: var(--bg-secondary);
