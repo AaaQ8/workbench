@@ -1,4 +1,57 @@
 function initSettings() {
+  // 通知设置
+  const notifyStatus = $('#notify-status');
+  const notifyToggle = $('#notify-toggle');
+  const soundToggle = $('#notify-sound-toggle');
+
+  function refreshNotifyUI() {
+    if (typeof Notify === 'undefined') return;
+    const perm = Notify.permission();
+    if (notifyStatus) {
+      notifyStatus.textContent = perm === 'granted' ? '已授权 ✅'
+        : perm === 'denied' ? '已拒绝 🔕(去浏览器设置里允许)'
+        : perm === 'unsupported' ? '浏览器不支持' : '未授权';
+    }
+    if (notifyToggle) {
+      notifyToggle.textContent = perm === 'granted' ? '测试通知' : '开启通知';
+    }
+    if (soundToggle) {
+      soundToggle.textContent = '声音:' + (Notify.sound ? '开' : '关');
+    }
+  }
+
+  if (notifyToggle) {
+    notifyToggle.addEventListener('click', async () => {
+      if (typeof Notify === 'undefined') return;
+      if (Notify.permission() === 'granted') {
+        Notify.push('🔔 通知测试', { body: '通知已正常工作!' });
+        return;
+      }
+      const ok = await Notify.requestPermission();
+      if (ok) {
+        Notify.push('🔔 通知已开启', { body: '专注完成、任务到点会弹通知' });
+      } else {
+        alert('未获得通知授权,可在浏览器地址栏的站点设置里手动允许通知');
+      }
+      refreshNotifyUI();
+    });
+  }
+  if (soundToggle) {
+    soundToggle.addEventListener('click', () => {
+      if (typeof Notify === 'undefined') return;
+      Notify.sound = !Notify.sound;
+      Store.set('pw_notify_sound', Notify.sound);
+      refreshNotifyUI();
+      if (Notify.sound) Notify.beep();
+    });
+  }
+  // 恢复声音偏好
+  if (typeof Notify !== 'undefined') {
+    const s = Store.get('pw_notify_sound', null);
+    if (s !== null) Notify.sound = !!s;
+  }
+  refreshNotifyUI();
+
   const cdName = $('#set-cd-name');
   const cdDate = $('#set-cd-date');
   const cdSave = $('#save-countdown');
