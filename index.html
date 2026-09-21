@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>个人工作台</title>
-  <link rel="stylesheet" href="css/style.css?v=12" />
+  <link rel="stylesheet" href="css/style.css?v=13" />
   <!-- PWA:手机「添加到主屏幕」后可全屏像 App 一样使用 -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d0d0f" />
@@ -1804,6 +1804,23 @@
           </div>
         </div>
         <div class="card">
+          <h3 class="card-title">🔐 访问密码</h3>
+          <p class="smart-tip">💡 设置后,每次打开工作台都需要输入密码,防止别人乱动你的数据(密码只存在本设备)</p>
+          <div class="setting-row">
+            <label>当前状态:</label>
+            <span id="pwd-status" style="font-size:13px;color:var(--text-secondary);">未设置</span>
+          </div>
+          <div class="setting-row">
+            <label>新密码:</label>
+            <input type="password" id="pwd-new" placeholder="留空则关闭密码" />
+          </div>
+          <div class="setting-row">
+            <label>确认密码:</label>
+            <input type="password" id="pwd-confirm" placeholder="再次输入" />
+          </div>
+          <button id="save-pwd" class="btn-primary">保存密码设置</button>
+        </div>
+        <div class="card">
           <h3 class="card-title">⏳ 倒计时设置</h3>
           <div class="setting-row">
             <label>目标名称:</label>
@@ -1890,6 +1907,7 @@
   <script src="js/chart.umd.min.js?v=1"></script>
   <script src="js/marked.min.js?v=1"></script>
   <script src="js/store.js?v=13"></script>
+  <script src="js/auth.js?v=1"></script>
   <script src="js/notify.js?v=1"></script>
   <script src="js/meta.js?v=4"></script>
   <script src="js/goals.js?v=4"></script>
@@ -1920,8 +1938,8 @@
   <script src="js/noise.js?v=2"></script>
   <script src="js/qrcode.min.js?v=1"></script>
   <script src="js/ai.js?v=4"></script>
-  <script src="js/settings.js?v=6"></script>
-  <script src="js/main.js?v=13"></script>
+  <script src="js/settings.js?v=7"></script>
+  <script src="js/main.js?v=14"></script>
 
 </body>
 </html>
