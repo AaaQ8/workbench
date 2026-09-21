@@ -1,0 +1,1934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>个人工作台(只读浏览)</title>
+  <style>
+    .readonly-banner{position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(90deg,#ff6b35,#f7b731);color:#fff;text-align:center;padding:6px;font-size:13px;font-weight:bold;}
+    body.readonly-mode{padding-top:30px;}
+  </style>
+  <link rel="stylesheet" href="css/style.css?v=13" />
+  <!-- PWA:手机「添加到主屏幕」后可全屏像 App 一样使用 -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0d0d0f" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="工作台" />
+</head>
+<body class="readonly-mode">
+  <div class="readonly-banner">🔒 只读浏览模式 — 只能查看,无法编辑</div>
+  <script>window._READONLY = true;</script>
+
+  <!-- 顶部栏 -->
+  <header class="top-bar">
+    <div class="logo">
+      <span class="logo-icon">✦</span>
+      <span class="logo-text">个人工作台</span>
+      <button class="sidebar-toggle" id="sidebar-toggle" title="切换侧边栏">☰</button>
+    </div>
+    <div class="top-right">
+      <span id="clock" class="clock">00:00:00</span>
+      <span class="sep">·</span>
+      <span id="date" class="date">--</span>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- 左侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-home">
+            🏠 首页总览 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-home">
+            <button class="nav-item active" data-panel="home">
+              <span class="nav-icon">🏠</span><span class="nav-label">首页</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-meta">
+            🧠 元认知训练营 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-meta">
+            <button class="nav-item" data-panel="meta">
+              <span class="nav-icon">🧠</span><span class="nav-label">元认知</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-goals">
+            🎯 目标与任务 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-goals">
+            <button class="nav-item" data-panel="goals">
+              <span class="nav-icon">🎯</span><span class="nav-label">目标管理</span>
+            </button>
+            <button class="nav-item" data-panel="planner">
+              <span class="nav-icon">📝</span><span class="nav-label">每日计划</span>
+            </button>
+            <button class="nav-item" data-panel="achievements">
+              <span class="nav-icon">🏆</span><span class="nav-label">成就库</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-knowledge">
+            📚 知识管理 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-knowledge">
+            <button class="nav-item" data-panel="knowledge">
+              <span class="nav-icon">📚</span><span class="nav-label">笔记库</span>
+            </button>
+            <button class="nav-item" data-panel="books">
+              <span class="nav-icon">📖</span><span class="nav-label">书单</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-art">
+            💃 艺术技能 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-art">
+            <button class="nav-item" data-panel="dance">
+              <span class="nav-icon">💃</span><span class="nav-label">舞蹈</span>
+            </button>
+            <button class="nav-item" data-panel="sing">
+              <span class="nav-icon">🎤</span><span class="nav-label">唱歌</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-study">
+            📖 学习成长 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-study">
+            <button class="nav-item" data-panel="study">
+              <span class="nav-icon">📖</span><span class="nav-label">学习</span>
+            </button>
+            <button class="nav-item" data-panel="english">
+              <span class="nav-icon">🔤</span><span class="nav-label">英语</span>
+            </button>
+            <button class="nav-item" data-panel="express">
+              <span class="nav-icon">💬</span><span class="nav-label">表达</span>
+            </button>
+            <button class="nav-item" data-panel="law">
+              <span class="nav-icon">⚖️</span><span class="nav-label">法律</span>
+            </button>
+            <button class="nav-item" data-panel="timetable">
+              <span class="nav-icon">📅</span><span class="nav-label">课表</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-life">
+            🌸 生活美学 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-life">
+            <button class="nav-item" data-panel="outfit">
+              <span class="nav-icon">👗</span><span class="nav-label">穿搭</span>
+            </button>
+            <button class="nav-item" data-panel="makeup">
+              <span class="nav-icon">💄</span><span class="nav-label">美妆</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-health">
+            🌿 健康养生 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-health">
+            <button class="nav-item" data-panel="wellness">
+              <span class="nav-icon">🌿</span><span class="nav-label">养生</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-finance">
+            💰 财务管理 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-finance">
+            <button class="nav-item" data-panel="finance">
+              <span class="nav-icon">💰</span><span class="nav-label">记账</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-entertainment">
+            📰 资讯娱乐 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-entertainment">
+            <button class="nav-item" data-panel="news">
+              <span class="nav-icon">📰</span><span class="nav-label">新闻</span>
+            </button>
+            <button class="nav-item" data-panel="podcast">
+              <span class="nav-icon">🎧</span><span class="nav-label">播客</span>
+            </button>
+            <button class="nav-item" data-panel="aistudy">
+              <span class="nav-icon">🤖</span><span class="nav-label">AI学习</span>
+            </button>
+            <button class="nav-item" data-panel="favorites">
+              <span class="nav-icon">⭐</span><span class="nav-label">收藏</span>
+            </button>
+            <button class="nav-item" data-panel="edit">
+              <span class="nav-icon">✂️</span><span class="nav-label">剪辑</span>
+            </button>
+            <button class="nav-item" data-panel="resume">
+              <span class="nav-icon">📄</span><span class="nav-label">简历</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-self">
+            🚀 自我提升 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-self">
+            <button class="nav-item" data-panel="focus">
+              <span class="nav-icon">🧘</span><span class="nav-label">专注</span>
+            </button>
+            <button class="nav-item" data-panel="money">
+              <span class="nav-icon">💵</span><span class="nav-label">赚钱</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-group">
+          <button class="sidebar-group-title group-toggle" data-group="g-settings">
+            ⚙️ 设置 <span class="group-arrow">▾</span>
+          </button>
+          <nav class="sidebar-nav group-items" id="g-settings">
+            <button class="nav-item" data-panel="settings">
+              <span class="nav-icon">⚙️</span><span class="nav-label">系统设置</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="content">
+
+      <!-- 🏠 首页 -->
+      <section class="tab-panel active" id="panel-home">
+        <div class="card countdown-card">
+          <h3 class="card-title">⏳ 倒数日</h3>
+          <div id="cd-list" class="cd-list"></div>
+          <p id="cd-empty" class="countdown-empty">还没有倒数日,到「设置 ⚙️」里加一个吧 →</p>
+        </div>
+
+        <div class="card todolist-card">
+          <h3 class="card-title">📋 今日待办</h3>
+          <div class="todo-input-wrap">
+            <input type="text" id="todo-input" placeholder="添加新任务..." />
+            <button id="todo-add" class="btn-primary">添加</button>
+          </div>
+          <ul id="todo-list" class="todo-list"></ul>
+        </div>
+
+        <div class="card quicknote-card">
+          <h3 class="card-title">📝 灵感速记</h3>
+          <textarea id="quick-note" placeholder="随手记录你的想法..."></textarea>
+          <button id="save-quicknote" class="btn-primary small">保存笔记</button>
+        </div>
+
+        <div class="card stats-card">
+          <h3 class="card-title">📊 数据概览</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-num" id="stat-tasks">0</div>
+              <div class="stat-label">完成任务</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="stat-focus">0</div>
+              <div class="stat-label">专注分钟</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="stat-notes">0</div>
+              <div class="stat-label">笔记数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="stat-today">0</div>
+              <div class="stat-label">今日完成</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🧠 元认知训练营 -->
+      <section class="tab-panel" id="panel-meta">
+        <div class="card">
+          <h3 class="card-title">🧠 元认知日记</h3>
+          <div class="meta-input-wrap">
+            <input type="text" id="meta-title" placeholder="今日反思主题..." />
+            <textarea id="meta-content" placeholder="今天你对自己的思考过程有什么新的觉察?记录下来吧...&#10;• 我今天有哪些自动化反应?&#10;• 当时的情绪是什么?&#10;• 下一次可以怎么调整?"></textarea>
+            <button id="meta-save" class="btn-primary">保存反思</button>
+          </div>
+          <ul id="meta-list" class="note-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">💡 认知工具箱</h3>
+          <div class="tool-grid">
+            <div class="tool-item">
+              <div class="tool-icon">🔄</div>
+              <div class="tool-name">思维定势</div>
+              <div class="tool-desc">识别并打破固有思维模式</div>
+            </div>
+            <div class="tool-item">
+              <div class="tool-icon">🎯</div>
+              <div class="tool-name">二阶思维</div>
+              <div class="tool-desc">思考「然后呢?」的连锁反应</div>
+            </div>
+            <div class="tool-item">
+              <div class="tool-icon">🪞</div>
+              <div class="tool-name">观察自我</div>
+              <div class="tool-desc">跳出画面看自己的行为</div>
+            </div>
+            <div class="tool-item">
+              <div class="tool-icon">📏</div>
+              <div class="tool-name">认知偏差</div>
+              <div class="tool-desc">警惕确认偏误、锚定效应</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📅 本周觉察挑战</h3>
+          <div class="challenge-list">
+            <div class="challenge-item">
+              <input type="checkbox" class="challenge-cb" data-id="c1" />
+              <span>记录一次情绪波动的触发点</span>
+            </div>
+            <div class="challenge-item">
+              <input type="checkbox" class="challenge-cb" data-id="c2" />
+              <span>用二阶思维分析一个决策</span>
+            </div>
+            <div class="challenge-item">
+              <input type="checkbox" class="challenge-cb" data-id="c3" />
+              <span>识别一个自己的自动化行为</span>
+            </div>
+            <div class="challenge-item">
+              <input type="checkbox" class="challenge-cb" data-id="c4" />
+              <span>写一封给过去自己的信</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🎯 目标管理 -->
+      <section class="tab-panel" id="panel-goals">
+        <div class="card">
+          <h3 class="card-title">🌟 年度目标</h3>
+          <div class="goal-input-wrap">
+            <input type="text" id="year-goal-input" placeholder="今年最重要的目标是什么?" />
+            <button id="year-goal-add" class="btn-primary">添加</button>
+          </div>
+          <ul id="year-goal-list" class="goal-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📅 短期目标</h3>
+          <div class="goal-input-wrap">
+            <input type="text" id="short-goal-input" placeholder="本周要完成什么?" />
+            <input type="date" id="short-goal-deadline" />
+            <button id="short-goal-add" class="btn-primary">添加</button>
+          </div>
+          <ul id="short-goal-list" class="goal-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎯 SMART 原则检查</h3>
+          <div class="smart-grid">
+            <div class="smart-item"><strong>S</strong><span>具体</span></div>
+            <div class="smart-item"><strong>M</strong><span>可衡量</span></div>
+            <div class="smart-item"><strong>A</strong><span>可实现</span></div>
+            <div class="smart-item"><strong>R</strong><span>相关</span></div>
+            <div class="smart-item"><strong>T</strong><span>有时限</span></div>
+          </div>
+          <p class="smart-tip">💡 好的目标应该是:「在 12 月 31 日前,读完 24 本好书」而不是「多读书」</p>
+        </div>
+      </section>
+
+      <!-- 🏆 成就库 -->
+      <section class="tab-panel" id="panel-achievements">
+        <div class="card">
+          <h3 class="card-title">🏆 成就殿堂</h3>
+          <div id="achievement-list" class="achievement-list"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📜 解锁规则</h3>
+          <div class="rule-list">
+            <div class="rule-item">🎯 完成第一个任务 → <strong>迈出第一步</strong></div>
+            <div class="rule-item">🔥 累计完成 10 个任务 → <strong>小有成就</strong></div>
+            <div class="rule-item">⚡ 累计专注 10 次 → <strong>专注达人</strong></div>
+            <div class="rule-item">📚 写下 3 条笔记 → <strong>知识积累</strong></div>
+            <div class="rule-item">⭐ 添加第一个目标 → <strong>确立目标</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 📚 知识管理 -->
+      <section class="tab-panel" id="panel-knowledge">
+        <div class="card">
+          <h3 class="card-title">📚 我的笔记</h3>
+          <div class="note-editor">
+            <input type="text" id="note-title" placeholder="笔记标题" />
+            <textarea id="note-content" placeholder="支持 Markdown:# 标题、**加粗**、- 列表、`代码`..."></textarea>
+            <div style="display:flex;gap:8px;">
+              <button id="note-save" class="btn-primary" style="flex:1;">保存笔记</button>
+              <button id="note-preview-toggle" class="btn-ghost">预览</button>
+            </div>
+            <div id="note-preview" style="display:none;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:12px;line-height:1.7;font-size:14px;max-height:400px;overflow:auto;"></div>
+          </div>
+          <ul id="note-list" class="note-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🏷️ 知识分类</h3>
+          <div class="tag-cloud">
+            <span class="tag-item">💡 灵感</span>
+            <span class="tag-item">📖 读书</span>
+            <span class="tag-item">👨‍💻 技术</span>
+            <span class="tag-item">💼 工作</span>
+            <span class="tag-item">🌱 成长</span>
+            <span class="tag-item">🍳 生活</span>
+            <span class="tag-item">✈️ 旅行</span>
+            <span class="tag-item">🎬 电影</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 💃 舞蹈(爵士舞练习助手) -->
+      <section class="tab-panel" id="panel-dance">
+        <div class="card">
+          <h3 class="card-title">🥁 节拍器 · 8拍计数</h3>
+          <div style="text-align:center;">
+            <div id="metro-bpm" style="font-size:44px;font-weight:700;color:var(--accent);">100</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">BPM(每分钟节拍)</div>
+          </div>
+          <input type="range" id="metro-slider" min="60" max="200" value="100" style="width:100%;" />
+          <div id="metro-dots" style="display:flex;justify-content:center;gap:8px;margin:12px 0;"></div>
+          <div id="metro-count" style="text-align:center;color:var(--text-secondary);font-size:13px;min-height:18px;">点击开始,跟着 1-8 拍数节奏</div>
+          <div class="focus-controls" style="margin-top:10px;">
+            <button id="metro-toggle" class="btn-primary big">▶ 开始</button>
+          </div>
+          <div class="focus-modes">
+            <button class="focus-mode-btn metro-preset" data-bpm="80">慢速 80</button>
+            <button class="focus-mode-btn metro-preset" data-bpm="100">基础 100</button>
+            <button class="focus-mode-btn metro-preset" data-bpm="120">中速 120</button>
+            <button class="focus-mode-btn metro-preset" data-bpm="140">快速 140</button>
+          </div>
+          <p class="smart-tip">💡 重音在 1 和 5(音调更高)。基本功用 80-100,套路合音乐用原速。</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📺 跟练视频</h3>
+          <div class="setting-row">
+            <input type="text" id="dance-video-url" placeholder="粘贴 B站/YouTube 视频链接" style="flex:1;" />
+            <button id="dance-video-add" class="btn-primary">收藏</button>
+          </div>
+          <div id="dance-video-player" style="display:none;margin-top:10px;">
+            <iframe id="dance-video-frame" style="width:100%;aspect-ratio:16/9;border:0;border-radius:10px;" allowfullscreen></iframe>
+          </div>
+          <ul id="dance-video-list" class="note-list"></ul>
+          <p class="smart-tip">💡 粘贴 bilibili.com/video/BV... 或 YouTube 链接,内嵌播放可反复跟练</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">✅ 练习打卡</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-num" id="dance-streak">0</div>
+              <div class="stat-label">连续天数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="dance-week">0</div>
+              <div class="stat-label">本周次数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="dance-total">0</div>
+              <div class="stat-label">累计次数</div>
+            </div>
+          </div>
+          <button id="dance-checkin" class="btn-primary" style="width:100%;margin-top:10px;">💪 今日练习打卡</button>
+          <ul id="dance-log-list" class="note-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">💃 今日练习计划</h3>
+          <div class="plan-list">
+            <div class="plan-item">
+              <span class="plan-time">15min</span>
+              <span class="plan-desc">热身拉伸 + 头肩胸胯 isolation 分离</span>
+            </div>
+            <div class="plan-item">
+              <span class="plan-time">20min</span>
+              <span class="plan-desc">爵士基本功:律动、wave、转体</span>
+            </div>
+            <div class="plan-item">
+              <span class="plan-time">45min</span>
+              <span class="plan-desc">新舞段学习(镜面跟跳 + 慢速分解)</span>
+            </div>
+            <div class="plan-item">
+              <span class="plan-time">20min</span>
+              <span class="plan-desc">成品舞合音乐 + 录像复盘</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎵 我的歌单</h3>
+          <ul class="media-list">
+            <a class="media-item" href="https://search.bilibili.com/all?keyword=NewJeans%20Super%20Shy%20%E8%88%9E%E8%B9%88" target="_blank" rel="noopener noreferrer">🎶 NewJeans - Super Shy <span class="tag">Kpop</span></a>
+            <a class="media-item" href="https://search.bilibili.com/all?keyword=%E6%9C%AC%E8%8D%89%E7%BA%B2%E7%9B%AE%20%E8%88%9E%E8%B9%88" target="_blank" rel="noopener noreferrer">🎶 周杰伦 - 本草纲目 <span class="tag">中国风</span></a>
+            <a class="media-item" href="https://search.bilibili.com/all?keyword=Beyonce%20Single%20Ladies%20dance" target="_blank" rel="noopener noreferrer">🎶 Beyoncé - Single Ladies <span class="tag">HipHop</span></a>
+            <a class="media-item" href="https://search.bilibili.com/all?keyword=LE%20SSERAFIM%20Unforgiven%20%E8%88%9E%E8%B9%88" target="_blank" rel="noopener noreferrer">🎶 LE SSERAFIM - Unforgiven <span class="tag">Kpop</span></a>
+            <a class="media-item" href="https://search.bilibili.com/all?keyword=Justin%20Timberlake%20Suit%20Tie%20dance" target="_blank" rel="noopener noreferrer">🎶 Justin Timberlake - Suit &amp; Tie <span class="tag">Pop</span></a>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📹 学习资源</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://www.youtube.com/results?search_query=1M+Dance+Studio" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">1M Dance Studio</div>
+                <div class="resource-desc">专业韩舞/爵士翻跳教学频道</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=%E9%9B%B6%E5%9F%BA%E7%A1%80%E7%88%B5%E5%A3%AB%E8%88%9E%E6%95%99%E5%AD%A6" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">跳跳舞蹈教学</div>
+                <div class="resource-desc">适合零基础的中文教学</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=%E8%A1%97%E8%88%9E%E6%95%99%E5%AD%A6%E5%85%A5%E9%97%A8" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">街舞大师课</div>
+                <div class="resource-desc">Breaking / Popping / Locking</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🎤 唱歌 -->
+      <section class="tab-panel" id="panel-sing">
+        <div class="card">
+          <h3 class="card-title">🎤 今日练声</h3>
+          <div class="sing-plan">
+            <div class="sing-step"><div class="step-num">1</div>气息练习 (5min)</div>
+            <div class="sing-step"><div class="step-num">2</div>开嗓哼鸣 (5min)</div>
+            <div class="sing-step"><div class="step-num">3</div>音阶琶音 (10min)</div>
+            <div class="sing-step"><div class="step-num">4</div>歌曲片段 (20min)</div>
+            <div class="sing-step"><div class="step-num">5</div>录音复盘 (10min)</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎵 待练歌曲</h3>
+          <ul class="media-list" id="rec-sing-songs"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎤 今日跟练</h3>
+          <ul class="media-list" id="rec-sing-practice"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📊 音域训练</h3>
+          <div class="range-display">
+            <div class="range-note">C3</div>
+            <div class="range-bar">
+              <div class="range-fill" style="width: 70%;"></div>
+            </div>
+            <div class="range-note">C5</div>
+          </div>
+          <p class="smart-tip">💡 每天坚持 30 分钟音阶练习,音域会逐渐拓宽</p>
+        </div>
+      </section>
+
+      <!-- 📖 学习 -->
+      <section class="tab-panel" id="panel-study">
+        <div class="card">
+          <h3 class="card-title">📖 学习计划</h3>
+          <div class="study-input-wrap">
+            <input type="text" id="study-subject" placeholder="科目..." />
+            <input type="number" id="study-hours" placeholder="时长(h)" min="0.5" step="0.5" />
+            <button id="study-add" class="btn-primary">添加</button>
+          </div>
+          <ul id="study-list" class="goal-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📚 正在读的书</h3>
+          <ul class="media-list" id="rec-study-books"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🌐 学习网站</h3>
+          <div class="source-grid">
+            <a class="source-item" href="https://github.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">💻</div>
+              <div class="src-name">GitHub</div>
+            </a>
+            <a class="source-item" href="https://www.icourse163.org" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">🎓</div>
+              <div class="src-name">中国大学MOOC</div>
+            </a>
+            <a class="source-item" href="https://www.coursera.org" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">🌍</div>
+              <div class="src-name">Coursera</div>
+            </a>
+            <a class="source-item" href="https://www.bilibili.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">📺</div>
+              <div class="src-name">B站学习区</div>
+            </a>
+            <a class="source-item" href="https://www.zhihu.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">💡</div>
+              <div class="src-name">知乎</div>
+            </a>
+            <a class="source-item" href="https://open.163.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">📖</div>
+              <div class="src-name">网易公开课</div>
+            </a>
+            <a class="source-item" href="https://www.imooc.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">🔧</div>
+              <div class="src-name">慕课网</div>
+            </a>
+            <a class="source-item" href="https://www.runoob.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">📓</div>
+              <div class="src-name">菜鸟教程</div>
+            </a>
+            <a class="source-item" href="https://leetcode.cn" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">⚙️</div>
+              <div class="src-name">力扣</div>
+            </a>
+            <a class="source-item" href="https://www.duolingo.cn" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">🦜</div>
+              <div class="src-name">多邻国</div>
+            </a>
+            <a class="source-item" href="https://flowus.cn" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">📝</div>
+              <div class="src-name">FlowUs</div>
+            </a>
+            <a class="source-item" href="https://www.yuque.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">📚</div>
+              <div class="src-name">语雀</div>
+            </a>
+          </div>
+          <p class="smart-tip">💡 涵盖编程/GitHub、MOOC 大学课、B站学习区、力扣刷题、英语学习等常用站点</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">⚡ 费曼学习法</h3>
+          <div class="feynman-steps">
+            <div class="feynman-item">1. 选一个你想理解的概念</div>
+            <div class="feynman-item">2. 用简单的语言向别人解释它</div>
+            <div class="feynman-item">3. 找出你解释不清的地方,回去复习</div>
+            <div class="feynman-item">4. 简化语言,让它更清晰</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🔤 英语 -->
+      <section class="tab-panel" id="panel-english">
+        <div class="card">
+          <h3 class="card-title">🎯 四级备考计划</h3>
+          <div class="setting-row">
+            <label>考试日期:</label>
+            <input type="date" id="cet-date" />
+          </div>
+          <div class="setting-row">
+            <label>目标分数:</label>
+            <input type="number" id="cet-target" min="0" max="710" placeholder="425 过线,目标更高" />
+          </div>
+          <button id="cet-save" class="btn-primary small">保存计划</button>
+          <div style="margin-top:14px;text-align:center;">
+            <span style="font-size:34px;font-weight:700;color:var(--accent);" id="cet-days">--</span>
+            <span style="color:var(--text-secondary);font-size:13px;"> 天后考试 · 目标 <span id="cet-target-show">425</span> 分</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:12px;">
+            <div id="cet-stage-0" style="flex:1;text-align:center;padding:7px 0;border-radius:8px;background:var(--bg-hover);font-size:12px;color:var(--text-secondary);transition:all .2s;">① 基础期</div>
+            <div id="cet-stage-1" style="flex:1;text-align:center;padding:7px 0;border-radius:8px;background:var(--bg-hover);font-size:12px;color:var(--text-secondary);transition:all .2s;">② 强化期</div>
+            <div id="cet-stage-2" style="flex:1;text-align:center;padding:7px 0;border-radius:8px;background:var(--bg-hover);font-size:12px;color:var(--text-secondary);transition:all .2s;">③ 冲刺期</div>
+          </div>
+          <div id="cet-stage-task" class="plan-list" style="margin-top:10px;"></div>
+          <p class="smart-tip">💡 阶段自动划分:考前 90 天以上为基础期、90-30 天强化期、最后 30 天冲刺期;请先确认你的实际考试日期</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📖 词汇进度</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-num" id="cet-vocab-done">0</div>
+              <div class="stat-label">累计已背 / 4500</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="cet-vocab-today">0</div>
+              <div class="stat-label">今日新背</div>
+            </div>
+          </div>
+          <div class="budget-bars" style="margin-top:8px;">
+            <div class="budget-row">
+              <span class="budget-label">大纲词汇</span>
+              <div class="budget-bar"><div class="budget-fill" id="cet-vocab-bar" style="width:0%;"></div></div>
+              <span class="budget-val" id="cet-vocab-pct">0%</span>
+            </div>
+          </div>
+          <div class="setting-row" style="margin-top:10px;">
+            <input type="number" id="cet-vocab-input" placeholder="今天背了多少个?" min="0" style="flex:1;" />
+            <button id="cet-vocab-add" class="btn-primary">打卡</button>
+          </div>
+          <div class="setting-row">
+            <button id="cet-vocab-reset" class="btn-ghost small">重置词汇进度</button>
+          </div>
+          <p class="smart-tip">💡 四级大纲约 4500 词,按 60 天算每天 50 个刚好过一遍;背完一遍后循环复习</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📝 真题成绩</h3>
+          <div class="setting-row">
+            <input type="text" id="cet-score-name" placeholder="套名(如 2025年12月 卷一)" style="flex:1;" />
+            <input type="number" id="cet-score-value" placeholder="总分" min="0" max="710" style="width:88px;" />
+            <button id="cet-score-add" class="btn-primary">记录</button>
+          </div>
+          <div style="height:200px;position:relative;margin-top:10px;"><canvas id="cet-score-chart"></canvas></div>
+          <p class="smart-tip">📈 总分走势(710 分制,绿虚线为 425 过级线)</p>
+          <ul id="cet-score-list" class="note-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📅 今日单词</h3>
+          <div id="word-list" class="word-list"></div>
+          <p class="smart-tip">💡 每天自动轮换 3 个四级高频词,点击单词卡可听发音</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎧 听力练习</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://www.bbc.co.uk/learningenglish/english/features/6-minute-english" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🎧</div>
+              <div>
+                <div class="resource-title">BBC 6 Minute English</div>
+                <div class="resource-desc">每天 6 分钟地道英语</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.ted.com/podcasts/ted-talks-daily" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🎧</div>
+              <div>
+                <div class="resource-title">TED Talks Daily</div>
+                <div class="resource-desc">演讲+字幕,练听力+思路</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=%E8%80%81%E5%8F%8B%E8%AE%B0%20%E8%8B%B1%E6%96%87" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🎬</div>
+              <div>
+                <div class="resource-title">Friends 老友记</div>
+                <div class="resource-desc">日常对话最实用</div>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🧪 刷题 &amp; 短视频</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://www.examcrafts.com/" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🧪</div>
+              <div>
+                <div class="resource-title">ExamCrafts</div>
+                <div class="resource-desc">真题刷题 + AI 批改 + 错题生词自动归档</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/?recommend=1" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音精选</div>
+                <div class="resource-desc">热门精选视频(手机上会跳转抖音 App)</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/search/%E8%8B%B1%E8%AF%AD%E5%AD%A6%E4%B9%A0?type=video" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音·英语学习</div>
+                <div class="resource-desc">英语学习热门短视频合集</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/search/%E8%8B%B1%E8%AF%AD%E5%90%AC%E5%8A%9B?type=video" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音·英语听力</div>
+                <div class="resource-desc">听力口语磨耳朵短视频</div>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">✍️ 写作打卡</h3>
+          <textarea id="english-journal" placeholder="用英文写几句今日想法...&#10;Today I learned...&#10;I felt...&#10;Tomorrow I want to..."></textarea>
+          <button id="english-save" class="btn-primary small">保存打卡</button>
+        </div>
+      </section>
+
+      <!-- 💬 表达 -->
+      <section class="tab-panel" id="panel-express">
+        <div class="card express-rec-card">
+          <h3 class="card-title">🎙️ 表达录音</h3>
+          <p class="smart-tip">💡 录一段表达练习,自动存到本地;受 5MB 限制,建议每段不超过 30 秒</p>
+          <div class="express-rec-controls">
+            <button id="express-rec-start">⏺ 开始录音</button>
+            <button id="express-rec-stop" disabled>⏹ 停止</button>
+            <span id="express-rec-status" class="express-rec-status">准备就绪</span>
+          </div>
+          <audio id="express-rec-preview" controls style="display:none;width:100%;margin-top:8px;"></audio>
+          <div class="study-input-wrap" style="margin-top:8px;">
+            <input type="text" id="express-rec-name" placeholder="给这段录音起个名字(可选)" style="flex:1;" />
+            <button id="express-rec-save" class="btn-primary" disabled>保存录音</button>
+          </div>
+          <ul id="express-rec-list" class="note-list" style="margin-top:10px;"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">💬 表达练习题目</h3>
+          <div class="prompt-list" id="rec-express-prompts"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📐 金字塔原理</h3>
+          <div class="pyramid">
+            <div class="pyramid-level top">结论先行</div>
+            <div class="pyramid-level">以上统下</div>
+            <div class="pyramid-level">归类分组</div>
+            <div class="pyramid-level bottom">逻辑递进</div>
+          </div>
+          <p class="smart-tip">💡 先说结论,再分点展开,最后总结</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎯 表达录音复盘</h3>
+          <div class="review-input-wrap">
+            <input type="text" id="express-topic" placeholder="话题..." />
+            <textarea id="express-review" placeholder="复盘要点:&#10;• 有没有卡壳的地方?&#10;• 逻辑是否清晰?&#10;• 声音/语速/表情如何?"></textarea>
+            <button id="express-save" class="btn-primary small">保存复盘</button>
+          </div>
+          <ul id="express-list" class="note-list"></ul>
+        </div>
+      </section>
+
+      <!-- ⚖️ 法律 -->
+      <section class="tab-panel" id="panel-law">
+        <div class="card">
+          <h3 class="card-title">⚖️ 法律小课堂</h3>
+          <div id="rec-law-article"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📖 正在学习的法规</h3>
+          <ul class="media-list" id="rec-law-study"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🔍 法律资源</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://wenshu.court.gov.cn/" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🌐</div>
+              <div>
+                <div class="resource-title">中国裁判文书网</div>
+                <div class="resource-desc">真实案例检索</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=%E7%BD%97%E7%BF%94%E8%AF%B4%E5%88%91%E6%B3%95" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">罗翔说刑法</div>
+                <div class="resource-desc">通俗易懂的法律科普</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://flk.npc.gov.cn/" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🏛️</div>
+              <div>
+                <div class="resource-title">国家法律法规数据库</div>
+                <div class="resource-desc">全国人大官方,查法律原文最权威</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://rmfyalk.court.gov.cn/" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📚</div>
+              <div>
+                <div class="resource-title">人民法院案例库</div>
+                <div class="resource-desc">最高法官方精选案例(免费注册)</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://tingshen.court.gov.cn/" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🎥</div>
+              <div>
+                <div class="resource-title">中国庭审公开网</div>
+                <div class="resource-desc">看真实庭审直播和回放</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.12348.gov.cn/" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">☎️</div>
+              <div>
+                <div class="resource-title">12348 中国法网</div>
+                <div class="resource-desc">免费法律咨询、找律师、法律援助</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.legalinfo.gov.cn/" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📰</div>
+              <div>
+                <div class="resource-title">中国普法网</div>
+                <div class="resource-desc">司法部主办,普法知识与热点解读</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.chinacourt.org/" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">⚖️</div>
+              <div>
+                <div class="resource-title">中国法院网</div>
+                <div class="resource-desc">法院新闻、典型案例、司法解释</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=法律科普" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 法律科普</div>
+                <div class="resource-desc">法律人讲生活常见法律问题</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=民法典解读" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 民法典解读</div>
+                <div class="resource-desc">逐条案例化讲解民法典</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/search/法律科普?type=video" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音 · 法律科普</div>
+                <div class="resource-desc">短视频学法律(手机跳转App)</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 📅 课表 -->
+      <section class="tab-panel" id="panel-timetable">
+        <div class="card">
+          <h3 class="card-title">⏰ 节次时间设置</h3>
+          <p class="smart-tip">💡 设置每节课的开始和结束时间,默认 5 节,可加可删</p>
+          <div id="tt-periods-list" class="tt-periods-list"></div>
+          <div class="study-input-wrap" style="margin-top:8px;">
+            <button id="tt-period-add" class="btn-ghost">➕ 添加一节</button>
+            <button id="tt-period-save" class="btn-primary">保存时间</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">➕ 添加课程</h3>
+          <div class="study-input-wrap">
+            <input type="text" id="tt-name" placeholder="课程名,如:高等数学" />
+          </div>
+          <div class="study-input-wrap">
+            <input type="text" id="tt-room" placeholder="教室(可选),如:教三 401" style="flex:1;" />
+            <input type="text" id="tt-teacher" placeholder="老师(可选)" style="flex:1;" />
+          </div>
+          <div class="study-input-wrap">
+            <select id="tt-day" style="flex:1;">
+              <option value="1">周一</option>
+              <option value="2">周二</option>
+              <option value="3">周三</option>
+              <option value="4">周四</option>
+              <option value="5">周五</option>
+              <option value="6">周六</option>
+              <option value="0">周日</option>
+            </select>
+            <select id="tt-period" style="flex:1;"></select>
+            <button id="tt-add" class="btn-primary">添加</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title" id="tt-today-title">📍 今天</h3>
+          <div id="tt-today-list" class="note-list" style="margin-bottom:10px;"></div>
+          <div class="tt-week-nav">
+            <button id="tt-prev-week" class="btn-ghost">◀ 上一周</button>
+            <h3 class="card-title" id="tt-week-title" style="font-size:15px;margin:0;">🗓 第 1 周</h3>
+            <button id="tt-next-week" class="btn-ghost">下一周 ▶</button>
+          </div>
+          <div id="tt-grid" class="tt-grid"></div>
+          <p class="smart-tip">💡 高亮列是今天;点课程可删除;左右滑动或点箭头切换周次</p>
+        </div>
+      </section>
+
+      <!-- 📖 书单 -->
+      <section class="tab-panel" id="panel-books">
+        <div class="card">
+          <h3 class="card-title">➕ 记录一本书</h3>
+          <div class="study-input-wrap">
+            <input type="text" id="book-title" placeholder="书名,如:被讨厌的勇气" />
+          </div>
+          <div class="study-input-wrap">
+            <input type="text" id="book-author" placeholder="作者(可不填)" style="flex:1;" />
+            <select id="book-status" style="width:88px;">
+              <option value="wish">想读</option>
+              <option value="reading" selected>在读</option>
+              <option value="done">读完</option>
+            </select>
+            <button id="book-add" class="btn-primary">添加</button>
+            <button id="book-cancel" class="btn-ghost" style="display:none;">取消编辑</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📚 我的书单</h3>
+          <div class="focus-modes" id="book-filters" style="margin-bottom:10px;">
+            <button class="focus-mode-btn active" data-f="all">全部</button>
+            <button class="focus-mode-btn" data-f="wish">想读</button>
+            <button class="focus-mode-btn" data-f="reading">在读</button>
+            <button class="focus-mode-btn" data-f="done">读完</button>
+          </div>
+          <ul id="book-list" class="note-list"></ul>
+          <p class="smart-tip">💡 点击书名旁的标签循环状态(想读→在读→读完),✕ 删除</p>
+        </div>
+      </section>
+
+      <!-- 👗 穿搭 -->
+      <section class="tab-panel" id="panel-outfit">
+        <div class="card">
+          <h3 class="card-title">👗 今日穿搭推荐</h3>
+          <div class="outfit-display">
+            <div class="outfit-card">
+              <div class="outfit-img">🖼️</div>
+              <div class="outfit-info">
+                <div class="outfit-style">通勤风</div>
+                <div class="outfit-item">衬衫 + 西裤 + 乐福鞋</div>
+                <div class="outfit-tip">💡 配色建议:米白+卡其+黑</div>
+              </div>
+            </div>
+            <div class="outfit-card">
+              <div class="outfit-img">🖼️</div>
+              <div class="outfit-info">
+                <div class="outfit-style">休闲风</div>
+                <div class="outfit-item">T恤 + 牛仔外套 + 小白鞋</div>
+                <div class="outfit-tip">💡 配色建议:白+蓝+灰</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎨 我的衣橱标签</h3>
+          <div class="tag-cloud" id="outfit-tags">
+            <span class="tag-item">👚 衬衫</span>
+            <span class="tag-item">👕 T恤</span>
+            <span class="tag-item">👖 牛仔裤</span>
+            <span class="tag-item">🧥 风衣</span>
+            <span class="tag-item">👗 连衣裙</span>
+            <span class="tag-item">👟 运动鞋</span>
+            <span class="tag-item">👠 高跟鞋</span>
+            <span class="tag-item">🎒 双肩包</span>
+          </div>
+          <p class="smart-tip">💡 点击标签穿上/脱下,自动记到本周对应日期;点某一天可清空当天记录</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📅 一周穿搭记录</h3>
+          <div class="week-outfit" id="week-outfit">
+            <div class="week-day" data-day="0"><div class="wd-name">周一</div><div class="wd-outfit">—</div></div>
+            <div class="week-day" data-day="1"><div class="wd-name">周二</div><div class="wd-outfit">—</div></div>
+            <div class="week-day" data-day="2"><div class="wd-name">周三</div><div class="wd-outfit">—</div></div>
+            <div class="week-day" data-day="3"><div class="wd-name">周四</div><div class="wd-outfit">—</div></div>
+            <div class="week-day" data-day="4"><div class="wd-name">周五</div><div class="wd-outfit">—</div></div>
+            <div class="week-day" data-day="5"><div class="wd-name">周六</div><div class="wd-outfit">—</div></div>
+            <div class="week-day" data-day="6"><div class="wd-name">周日</div><div class="wd-outfit">—</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎬 穿搭技巧视频</h3>
+          <ul class="media-list" id="rec-outfit-tips"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">👔 我的衣橱(按类别)</h3>
+          <p class="smart-tip">💡 选好类别后上传图片,自动按上传时间倒序排;注意 5MB 存储上限,建议单张 200KB 内</p>
+          <div class="study-input-wrap" style="margin-bottom:8px;">
+            <select id="wd-category" style="flex:1;">
+              <option value="衬衫">👚 衬衫</option>
+              <option value="T恤">👕 T恤</option>
+              <option value="裤装">👖 裤装</option>
+              <option value="外套">🧥 外套</option>
+              <option value="裙装">👗 裙装</option>
+              <option value="鞋">👟 鞋</option>
+              <option value="包">🎒 包</option>
+              <option value="其他">✨ 其他</option>
+            </select>
+            <input type="file" id="wd-file" accept="image/*" style="display:none;" />
+            <button id="wd-upload-btn" class="btn-primary">➕ 上传图片</button>
+          </div>
+          <div class="wd-cat-tabs" id="wd-cat-tabs"></div>
+          <div id="wd-gallery" class="wd-gallery"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🌸 我的特征档案</h3>
+          <div id="profile-form"></div>
+          <div style="display:flex;align-items:center;margin-top:10px;">
+            <button id="profile-save" class="btn-primary small">保存特征</button>
+            <button id="profile-clear" class="btn-ghost small" style="margin-left:8px;">清空重填</button>
+            <span id="profile-msg" style="margin-left:8px;font-size:12px;color:var(--accent);"></span>
+          </div>
+          <div id="profile-links" class="resource-list" style="margin-top:12px;"></div>
+          <p class="smart-tip">💡 填好特征保存后,自动生成为你定制的穿搭/美妆视频搜索入口(抖音+B站),美妆页也会同步出现</p>
+        </div>
+      </section>
+
+      <!-- 💄 美妆 -->
+      <section class="tab-panel" id="panel-makeup">
+        <div class="card">
+          <h3 class="card-title">💄 今日妆容</h3>
+          <div class="makeup-steps">
+            <div class="makeup-step">
+              <div class="step-num">1</div>
+              <div class="step-name">护肤打底</div>
+              <div class="step-desc">化妆水 + 精华 + 乳液 + 防晒</div>
+            </div>
+            <div class="makeup-step">
+              <div class="step-num">2</div>
+              <div class="step-name">底妆</div>
+              <div class="step-desc">妆前乳 + 粉底液 + 遮瑕 + 散粉</div>
+            </div>
+            <div class="makeup-step">
+              <div class="step-num">3</div>
+              <div class="step-name">眼妆</div>
+              <div class="step-desc">眼影 + 眼线 + 睫毛膏</div>
+            </div>
+            <div class="makeup-step">
+              <div class="step-num">4</div>
+              <div class="step-name">腮红 + 修容</div>
+              <div class="step-desc">提升气色,塑造轮廓</div>
+            </div>
+            <div class="makeup-step">
+              <div class="step-num">5</div>
+              <div class="step-name">唇妆</div>
+              <div class="step-desc">唇线笔 + 口红 + 高光点缀</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎨 妆容风格库</h3>
+          <div class="makeup-grid">
+            <a class="makeup-card" href="https://search.bilibili.com/all?keyword=%E7%BA%AF%E6%AC%B2%E9%A3%8E%20%E5%A6%86%E5%AE%B9%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer"><div class="mu-icon">🌸</div><div class="mu-name">纯欲风</div></a>
+            <a class="makeup-card" href="https://search.bilibili.com/all?keyword=%E6%B0%9B%E5%9B%B4%E6%84%9F%20%E5%A6%86%E5%AE%B9%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer"><div class="mu-icon">🔥</div><div class="mu-name">氛围感</div></a>
+            <a class="makeup-card" href="https://search.bilibili.com/all?keyword=%E6%B5%93%E9%A2%9C%E5%A6%86%20%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer"><div class="mu-icon">👠</div><div class="mu-name">浓颜妆</div></a>
+            <a class="makeup-card" href="https://search.bilibili.com/all?keyword=%E4%BC%AA%E7%B4%A0%E9%A2%9C%20%E5%A6%86%E5%AE%B9%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer"><div class="mu-icon">☁️</div><div class="mu-name">伪素颜</div></a>
+            <a class="makeup-card" href="https://search.bilibili.com/all?keyword=%E8%88%9E%E5%8F%B0%E5%A6%86%20%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer"><div class="mu-icon">✨</div><div class="mu-name">舞台妆</div></a>
+            <a class="makeup-card" href="https://search.bilibili.com/all?keyword=%E9%80%9A%E5%8B%A4%E5%A6%86%20%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer"><div class="mu-icon">💼</div><div class="mu-name">通勤妆</div></a>
+          </div>
+          <p class="smart-tip">💡 点击风格卡直达 B站妆教视频</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🗂️ 我的爱用品</h3>
+          <div class="study-input-wrap">
+            <input type="text" id="makeup-fav-input" placeholder="输入爱用品名,如:YSL 唇釉 #12" />
+            <button id="makeup-fav-add" class="btn-primary">添加</button>
+          </div>
+          <ul id="makeup-fav-list" class="media-list"></ul>
+          <p class="smart-tip">💡 点击条目可直达 B站搜索评测,点 ✕ 删除</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🧬 按我的特征找教程</h3>
+          <div id="makeup-profile-links" class="resource-list"></div>
+          <p class="smart-tip">💡 根据「穿搭 → 我的特征档案」里保存的肤质/脸型/肤色自动生成专属教程入口</p>
+        </div>
+      </section>
+
+      <!-- 📝 每日计划 -->
+      <section class="tab-panel" id="panel-planner">
+        <div class="card pl-reminder-card">
+          <h3 class="card-title">🔔 任务提醒</h3>
+          <div class="pl-reminder-row">
+            <span id="pl-reminder-status">未开启</span>
+            <button id="pl-reminder-toggle" class="btn-primary">开启提醒</button>
+          </div>
+          <p class="smart-tip">💡 给任务设置时间(下方),到点会自动弹通知 + 蜂鸣声。需保持页面打开。</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">➕ 安排一件事</h3>
+          <div class="study-input-wrap">
+            <input type="text" id="pl-text" placeholder="要做什么?如:高数作业第3章" />
+          </div>
+          <div class="study-input-wrap">
+            <select id="pl-cat" style="flex:1;">
+              <option value="学习">📚 学习</option>
+              <option value="生活">🏠 生活</option>
+              <option value="运动">🏃 运动</option>
+              <option value="其他">✨ 其他</option>
+            </select>
+            <input type="time" id="pl-time" style="flex:1;" />
+            <button id="pl-add" class="btn-primary">添加</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📊 完成情况</h3>
+          <div id="pl-streak" style="font-size:13px;margin-bottom:8px;"></div>
+          <canvas id="pl-chart" height="150"></canvas>
+        </div>
+        <div class="card">
+          <h3 class="card-title">✅ 今日任务清单</h3>
+          <div class="focus-modes" id="pl-filters" style="margin-bottom:10px;">
+            <button class="focus-mode-btn active" data-f="today">今日</button>
+            <button class="focus-mode-btn" data-f="all">全部</button>
+            <button class="focus-mode-btn" data-f="done">已完成</button>
+          </div>
+          <ul id="pl-list" class="note-list"></ul>
+          <p class="smart-tip">💡 可给任务安排时间,到点未完成会标红;点击圆圈打卡完成</p>
+        </div>
+      </section>
+
+      <!-- 🌿 养生 -->
+      <section class="tab-panel" id="panel-wellness">
+        <div class="card">
+          <h3 class="card-title">🌿 今日养生贴士</h3>
+          <div id="wellness-tip" style="padding:12px 14px;border-radius:10px;background:var(--bg-hover);font-size:14px;line-height:1.7;"></div>
+          <p class="smart-tip">💡 每天自动换一条,日积月累</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🧘 八段锦 &amp; 养生功法视频</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=八段锦官方教学" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 八段锦官方教学</div>
+                <div class="resource-desc">国家体育总局版,标准动作分解</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=八段锦跟练" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 八段锦跟练</div>
+                <div class="resource-desc">跟着口令一起练,每天12分钟</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=站桩教学" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 站桩教学</div>
+                <div class="resource-desc">养气安神的基础功法</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=太极拳教学" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 太极拳教学</div>
+                <div class="resource-desc">柔和缓慢,适合零基础</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/search/八段锦?type=video" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音 · 八段锦</div>
+                <div class="resource-desc">短视频跟练(手机跳转App)</div>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🍵 吃什么 · 时令养生</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=养生食谱" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 养生食谱</div>
+                <div class="resource-desc">家常养生餐做法视频</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=时令养生汤" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 时令养生汤</div>
+                <div class="resource-desc">应季煲汤,一家老小都适合</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/search/吃什么养生?type=video" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音 · 吃什么养生</div>
+                <div class="resource-desc">当季吃什么短视频(手机跳转App)</div>
+              </div>
+            </a>
+          </div>
+          <ul class="note-list" style="margin-top:10px;">
+            <li class="note-item">🥣 早餐要吃热,小米粥、鸡蛋最养胃</li>
+            <li class="note-item">🥬 每天半斤绿叶菜,应季的优先</li>
+            <li class="note-item">💧 少喝冰饮,温水最养脾胃</li>
+            <li class="note-item">🍚 晚饭七分饱,睡前 3 小时不进食</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📜 日常养生知识</h3>
+          <ul class="note-list">
+            <li class="note-item">😴 23 点前睡觉,子时是身体修复黄金期</li>
+            <li class="note-item">🚶 久坐每小时起身活动 3 分钟</li>
+            <li class="note-item">🧦 寒从脚起,天凉先护好脚踝和脖子</li>
+            <li class="note-item">😤 少怒养肝,情绪平稳是最好的养生</li>
+            <li class="note-item">☀️ 上午晒背 15 分钟,补阳气促吸收</li>
+            <li class="note-item">🍵 红枣枸杞虽好,湿热体质要少吃</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 💰 财务管理 -->
+      <section class="tab-panel" id="panel-finance">
+        <div class="card">
+          <h3 class="card-title">💰 快速记账</h3>
+          <div class="finance-input">
+            <select id="fin-type">
+              <option value="expense">支出</option>
+              <option value="income">收入</option>
+            </select>
+            <input type="number" id="fin-amount" placeholder="金额" min="0" step="0.01" />
+            <input type="text" id="fin-cat" placeholder="分类(餐饮/交通/工资...)" />
+            <input type="date" id="fin-date" />
+            <button id="fin-add" class="btn-primary">记录</button>
+          </div>
+          <ul id="fin-list" class="note-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📊 本月概览</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-num" id="fin-income">¥0</div>
+              <div class="stat-label">本月收入</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="fin-expense">¥0</div>
+              <div class="stat-label">本月支出</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="fin-balance">¥0</div>
+              <div class="stat-label">本月结余</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="fin-save-rate">0%</div>
+              <div class="stat-label">储蓄率</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📊 支出分析</h3>
+          <div style="height:220px;position:relative;margin-top:8px;"><canvas id="fin-cat-chart"></canvas></div>
+          <div style="height:220px;position:relative;margin:16px 0 8px;"><canvas id="fin-trend-chart"></canvas></div>
+          <p class="smart-tip">💡 环形图:本月支出分类占比;折线图:最近 14 天收支走势(记一笔就自动更新)</p>
+        </div>
+      </section>
+
+      <!-- 📰 新闻 -->
+      <section class="tab-panel" id="panel-news">
+        <div class="card">
+          <h3 class="card-title">🔥 热榜直达</h3>
+          <ul class="news-list">
+            <a class="news-item" href="https://s.weibo.com/top/summary" target="_blank" rel="noopener noreferrer">
+              <span class="news-tag">热搜</span>
+              <span class="news-title">微博热搜榜</span>
+              <span class="news-time">↗</span>
+            </a>
+            <a class="news-item" href="https://www.zhihu.com/hot" target="_blank" rel="noopener noreferrer">
+              <span class="news-tag">热榜</span>
+              <span class="news-title">知乎热榜</span>
+              <span class="news-time">↗</span>
+            </a>
+            <a class="news-item" href="https://top.baidu.com/board?tab=realtime" target="_blank" rel="noopener noreferrer">
+              <span class="news-tag">热点</span>
+              <span class="news-title">百度实时热点</span>
+              <span class="news-time">↗</span>
+            </a>
+            <a class="news-item" href="https://www.toutiao.com/hot-event/hot-board/?origin=toutiao_pc" target="_blank" rel="noopener noreferrer">
+              <span class="news-tag">头条</span>
+              <span class="news-title">今日头条热榜</span>
+              <span class="news-time">↗</span>
+            </a>
+            <a class="news-item" href="https://www.bilibili.com/v/popular/rank/all" target="_blank" rel="noopener noreferrer">
+              <span class="news-tag">视频</span>
+              <span class="news-title">B站热门排行</span>
+              <span class="news-time">↗</span>
+            </a>
+            <a class="news-item" href="https://www.douyin.com/hot" target="_blank" rel="noopener noreferrer">
+              <span class="news-tag">短视频</span>
+              <span class="news-title">抖音热点榜</span>
+              <span class="news-time">↗</span>
+            </a>
+          </ul>
+          <p class="smart-tip">💡 纯本地页面拿不到实时新闻(有跨域限制),点击直达各平台热榜最靠谱</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🗞️ 我的关注源</h3>
+          <div class="source-grid">
+            <a class="source-item" href="https://36kr.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">🌐</div>
+              <div class="src-name">36氪</div>
+            </a>
+            <a class="source-item" href="https://www.huxiu.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">📱</div>
+              <div class="src-name">虎嗅网</div>
+            </a>
+            <a class="source-item" href="https://www.caixin.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">💼</div>
+              <div class="src-name">财新</div>
+            </a>
+            <a class="source-item" href="http://www.people.com.cn" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">📰</div>
+              <div class="src-name">人民日报</div>
+            </a>
+            <a class="source-item" href="https://www.douban.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">🎬</div>
+              <div class="src-name">豆瓣</div>
+            </a>
+            <a class="source-item" href="https://www.guokr.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">🔬</div>
+              <div class="src-name">果壳</div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🎧 播客 -->
+      <section class="tab-panel" id="panel-podcast">
+        <div class="card">
+          <h3 class="card-title">🎧 我的订阅</h3>
+          <ul class="media-list" id="rec-podcast-subs"></ul>
+          <p class="smart-tip">💡 点击节目直达 B站搜索,最新一期随时听;每天换 4 档</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📱 收听平台</h3>
+          <div class="source-grid">
+            <a class="source-item" href="https://xiaoyuzhoufm.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">🪐</div>
+              <div class="src-name">小宇宙</div>
+            </a>
+            <a class="source-item" href="https://music.163.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">🎵</div>
+              <div class="src-name">网易云音乐</div>
+            </a>
+            <a class="source-item" href="https://podcasts.apple.com/cn" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">🍎</div>
+              <div class="src-name">Apple 播客</div>
+            </a>
+            <a class="source-item" href="https://www.bilibili.com" target="_blank" rel="noopener noreferrer">
+              <div class="src-icon">📺</div>
+              <div class="src-name">B站</div>
+            </a>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">⭐ 推荐给你</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://www.nytimes.com/thedaily" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🎙️</div>
+              <div>
+                <div class="resource-title">The Daily</div>
+                <div class="resource-desc">纽约时报每日新闻 英文版</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.npr.org/programs/how-i-built-this/" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🎙️</div>
+              <div>
+                <div class="resource-title">How I Built This</div>
+                <div class="resource-desc">创业者故事 NPR</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🤖 AI学习 -->
+      <section class="tab-panel" id="panel-aistudy">
+        <div class="card">
+          <h3 class="card-title">🤖 学习笔记</h3>
+          <div class="note-editor">
+            <input type="text" id="ai-note-title" placeholder="标题...例如:Prompt 工程第 3 讲" />
+            <textarea id="ai-note-content" placeholder="内容...&#10;• 关键概念&#10;• 示例 Prompt&#10;• 实战心得"></textarea>
+            <button id="ai-note-save" class="btn-primary">保存笔记</button>
+          </div>
+          <ul id="ai-note-list" class="note-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📚 正在学习的 AI 主题</h3>
+          <div class="ai-topic-list">
+            <a class="ai-topic" href="https://search.bilibili.com/all?keyword=Prompt%20Engineering%20%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer">
+              <span class="topic-icon">🧪</span>
+              <span class="topic-name">Prompt Engineering</span>
+              <div class="topic-progress"><div class="topic-fill" style="width: 60%;"></div></div>
+            </a>
+            <a class="ai-topic" href="https://search.bilibili.com/all?keyword=LLM%20%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%20%E5%8E%9F%E7%90%86" target="_blank" rel="noopener noreferrer">
+              <span class="topic-icon">🧠</span>
+              <span class="topic-name">LLM 原理</span>
+              <div class="topic-progress"><div class="topic-fill" style="width: 40%;"></div></div>
+            </a>
+            <a class="ai-topic" href="https://search.bilibili.com/all?keyword=AI%E7%BB%98%E7%94%BB%20Midjourney%20%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer">
+              <span class="topic-icon">🖼️</span>
+              <span class="topic-name">AI 绘画</span>
+              <div class="topic-progress"><div class="topic-fill" style="width: 25%;"></div></div>
+            </a>
+            <a class="ai-topic" href="https://search.bilibili.com/all?keyword=RAG%20Agent%20%E5%BC%80%E5%8F%91%20%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer">
+              <span class="topic-icon">🔗</span>
+              <span class="topic-name">RAG / Agent</span>
+              <div class="topic-progress"><div class="topic-fill" style="width: 15%;"></div></div>
+            </a>
+          </div>
+          <p class="smart-tip">💡 点击主题直达 B站教程搜索</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🛠️ 常用 AI 工具</h3>
+          <div class="source-grid">
+            <a class="source-item" href="https://chatgpt.com" target="_blank" rel="noopener noreferrer"><div class="src-icon">💬</div><div class="src-name">ChatGPT</div></a>
+            <a class="source-item" href="https://claude.ai" target="_blank" rel="noopener noreferrer"><div class="src-icon">🧠</div><div class="src-name">Claude</div></a>
+            <a class="source-item" href="https://www.perplexity.ai" target="_blank" rel="noopener noreferrer"><div class="src-icon">🔍</div><div class="src-name">Perplexity</div></a>
+            <a class="source-item" href="https://www.midjourney.com" target="_blank" rel="noopener noreferrer"><div class="src-icon">🖼️</div><div class="src-name">Midjourney</div></a>
+            <a class="source-item" href="https://stability.ai" target="_blank" rel="noopener noreferrer"><div class="src-icon">🎨</div><div class="src-name">Stable Diffusion</div></a>
+            <a class="source-item" href="https://www.notion.so" target="_blank" rel="noopener noreferrer"><div class="src-icon">📊</div><div class="src-name">Notion AI</div></a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ⭐ 收藏 -->
+      <section class="tab-panel" id="panel-favorites">
+        <div class="card">
+          <h3 class="card-title">⭐ 快速收藏</h3>
+          <div class="fav-input">
+            <input type="text" id="fav-title" placeholder="标题" />
+            <input type="text" id="fav-url" placeholder="链接 URL" />
+            <select id="fav-cat">
+              <option value="文章">📄 文章</option>
+              <option value="视频">🎬 视频</option>
+              <option value="播客">🎧 播客</option>
+              <option value="工具">🛠️ 工具</option>
+              <option value="其他">📌 其他</option>
+            </select>
+            <button id="fav-add" class="btn-primary">收藏</button>
+          </div>
+          <ul id="fav-list" class="note-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🏷️ 收藏分类</h3>
+          <div class="tag-cloud" id="fav-cat-tags">
+            <span class="tag-item" data-cat="文章">📄 文章</span>
+            <span class="tag-item" data-cat="视频">🎬 视频</span>
+            <span class="tag-item" data-cat="播客">🎧 播客</span>
+            <span class="tag-item" data-cat="工具">🛠️ 工具</span>
+            <span class="tag-item" data-cat="其他">📌 其他</span>
+          </div>
+          <p class="smart-tip">💡 点击分类可筛选收藏列表,再点一次显示全部</p>
+        </div>
+      </section>
+
+      <!-- ✂️ 剪辑 -->
+      <section class="tab-panel" id="panel-edit">
+        <div class="card">
+          <h3 class="card-title">✂️ 项目列表</h3>
+          <div class="study-input-wrap">
+            <input type="text" id="edit-project-input" placeholder="新项目名,如:Vlog #24 秋日周末..." />
+            <button id="edit-project-add" class="btn-primary">添加</button>
+          </div>
+          <ul id="edit-project-list" class="note-list"></ul>
+          <p class="smart-tip">💡 点击项目卡循环切换状态(草稿→剪辑中→已完成→已发布),✕ 删除</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎞️ 剪辑流程</h3>
+          <div class="edit-flow">
+            <div class="flow-item">1️⃣ 素材导入 &amp; 粗剪</div>
+            <div class="flow-item">2️⃣ 节奏调整 &amp; 卡点</div>
+            <div class="flow-item">3️⃣ 调色 &amp; 滤镜</div>
+            <div class="flow-item">4️⃣ 字幕 &amp; 文字</div>
+            <div class="flow-item">5️⃣ 音频 &amp; BGM</div>
+            <div class="flow-item">6️⃣ 导出 &amp; 发布</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎥 我的视频库</h3>
+          <p class="smart-tip">💡 上传剪辑成品/素材,存在本地浏览器(IndexedDB),不占 localStorage,容量大</p>
+          <div class="study-input-wrap">
+            <input type="file" id="edit-video-input" accept="video/*" multiple style="display:none;" />
+            <button id="edit-video-upload" class="btn-primary">⬆️ 上传视频</button>
+            <span id="edit-video-size" style="font-size:12px;color:var(--text-secondary);"></span>
+          </div>
+          <div id="edit-video-list" class="edit-video-list"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🛠️ 常用工具</h3>
+          <div class="source-grid">
+            <a class="source-item" href="https://www.capcut.cn" target="_blank" rel="noopener noreferrer"><div class="src-icon">🎬</div><div class="src-name">剪映</div></a>
+            <a class="source-item" href="https://www.adobe.com/products/premiere.html" target="_blank" rel="noopener noreferrer"><div class="src-icon">🎬</div><div class="src-name">Premiere Pro</div></a>
+            <a class="source-item" href="https://www.apple.com/final-cut-pro/" target="_blank" rel="noopener noreferrer"><div class="src-icon">🎬</div><div class="src-name">Final Cut</div></a>
+            <a class="source-item" href="https://www.blackmagicdesign.com/products/davinciresolve" target="_blank" rel="noopener noreferrer"><div class="src-icon">🎬</div><div class="src-name">DaVinci</div></a>
+            <a class="source-item" href="https://www.adobe.com/products/audition.html" target="_blank" rel="noopener noreferrer"><div class="src-icon">🎵</div><div class="src-name">Audition</div></a>
+            <a class="source-item" href="https://www.adobe.com/products/aftereffects.html" target="_blank" rel="noopener noreferrer"><div class="src-icon">🎨</div><div class="src-name">After Effects</div></a>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎓 剪辑技巧视频</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=剪映教程" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · 剪映教程</div>
+                <div class="resource-desc">手机/电脑剪辑入门到进阶</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=PR教程" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📺</div>
+              <div>
+                <div class="resource-title">B站 · Premiere 教程</div>
+                <div class="resource-desc">专业剪辑软件系统学习</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=视频调色教程" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🎨</div>
+              <div>
+                <div class="resource-title">B站 · 调色教程</div>
+                <div class="resource-desc">让画面质感翻倍的调色思路</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=剪辑思路" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🧠</div>
+              <div>
+                <div class="resource-title">B站 · 剪辑思路</div>
+                <div class="resource-desc">节奏、叙事与转场技巧</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://www.douyin.com/search/剪辑技巧?type=video" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">📱</div>
+              <div>
+                <div class="resource-title">抖音 · 剪辑技巧</div>
+                <div class="resource-desc">短视频剪辑小妙招(手机跳转App)</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 📄 简历 -->
+      <section class="tab-panel" id="panel-resume">
+        <div class="card">
+          <h3 class="card-title">📄 我的简历</h3>
+          <p class="smart-tip">💡 记录教育、实习、奖项和证书照片,所有数据存本地</p>
+
+          <div class="resume-section">
+            <h4>🎓 教育经历</h4>
+            <div class="study-input-wrap">
+              <input type="text" id="rs-edu-school" placeholder="学校" style="flex:2;" />
+              <input type="text" id="rs-edu-major" placeholder="专业" style="flex:2;" />
+              <input type="text" id="rs-edu-time" placeholder="如 2023.09-2027.06" style="flex:2;" />
+              <button class="btn-primary" id="rs-edu-add">添加</button>
+            </div>
+            <div id="rs-edu-list"></div>
+          </div>
+
+          <div class="resume-section">
+            <h4>💼 实习/工作</h4>
+            <div class="study-input-wrap">
+              <input type="text" id="rs-work-company" placeholder="公司" style="flex:2;" />
+              <input type="text" id="rs-work-position" placeholder="职位" style="flex:2;" />
+              <input type="text" id="rs-work-time" placeholder="如 2024.07-2024.09" style="flex:2;" />
+              <button class="btn-primary" id="rs-work-add">添加</button>
+            </div>
+            <textarea id="rs-work-desc" placeholder="干了什么(可选)..." style="width:100%;min-height:50px;margin-top:6px;"></textarea>
+            <div id="rs-work-list"></div>
+          </div>
+
+          <div class="resume-section">
+            <h4>🏆 奖项/证书</h4>
+            <div class="study-input-wrap">
+              <input type="text" id="rs-award-name" placeholder="如 校级一等奖学金" style="flex:2;" />
+              <input type="text" id="rs-award-time" placeholder="如 2024.06" style="flex:1;" />
+              <button class="btn-primary" id="rs-award-add">添加</button>
+            </div>
+            <div id="rs-award-list"></div>
+          </div>
+
+          <div class="resume-section">
+            <h4>🖼️ 证书/作品照片</h4>
+            <input type="file" id="rs-photo-file" accept="image/*" multiple style="display:none;" />
+            <button class="btn-primary" id="rs-photo-btn">➕ 上传照片</button>
+            <div id="rs-photo-list" class="resume-photo-list" style="margin-top:8px;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🧘 专注 -->
+      <section class="tab-panel" id="panel-focus">
+        <div class="card focus-card">
+          <h3 class="card-title">🧘 专注计时</h3>
+          <div class="focus-display">
+            <div class="focus-time" id="focus-time">25:00</div>
+            <div class="focus-mode" id="focus-mode">专注模式</div>
+          </div>
+          <div class="focus-controls">
+            <button id="focus-start" class="btn-primary big">开始</button>
+            <button id="focus-reset" class="btn-ghost">重置</button>
+          </div>
+          <div class="focus-modes">
+            <button class="focus-mode-btn active" data-min="25">专注 25min</button>
+            <button class="focus-mode-btn" data-min="15">短专注 15min</button>
+            <button class="focus-mode-btn" data-min="45">深度 45min</button>
+            <button class="focus-mode-btn" data-min="5">休息 5min</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📊 专注统计</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-num" id="focus-today">0</div>
+              <div class="stat-label">今日专注</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="focus-total">0</div>
+              <div class="stat-label">累计时长</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="focus-count">0</div>
+              <div class="stat-label">累计次数</div>
+            </div>
+          </div>
+          <p class="smart-tip">💡 番茄工作法:25 分钟专注 + 5 分钟休息,4 轮后长休 15-30 分钟</p>
+          <div style="height:200px;position:relative;margin-top:12px;"><canvas id="focus-history-chart"></canvas></div>
+          <p class="smart-tip">📈 最近 14 天专注分钟数(每完成一次计时自动记录)</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎵 专注白噪音</h3>
+          <div class="noise-grid">
+            <div class="noise-item" data-sound="rain">🌧️ 雨声</div>
+            <div class="noise-item" data-sound="forest">🌲 森林</div>
+            <div class="noise-item" data-sound="stream">💧 溪流</div>
+            <div class="noise-item" data-sound="meditation">🕉️ 冥想钵</div>
+            <div class="noise-item" data-sound="fan">🌀 风扇</div>
+            <div class="noise-item" data-sound="night">🦗 深夜</div>
+          </div>
+          <p class="smart-tip">💡 点击播放真实环境音(本地合成,无需联网),再点一次停止</p>
+        </div>
+      </section>
+
+      <!-- 💵 赚钱 -->
+      <section class="tab-panel" id="panel-money">
+        <div class="card">
+          <h3 class="card-title">💡 收入渠道</h3>
+          <div class="income-list">
+            <div class="income-item">
+              <div class="inc-icon">💼</div>
+              <div class="inc-info">
+                <div class="inc-name">主业工资</div>
+                <div class="inc-desc">稳定的被动收入基础</div>
+              </div>
+              <div class="inc-val">¥8000/mo</div>
+            </div>
+            <div class="income-item">
+              <div class="inc-icon">💻</div>
+              <div class="inc-info">
+                <div class="inc-name">技术副业</div>
+                <div class="inc-desc">接外包 / 做产品</div>
+              </div>
+              <div class="inc-val">+¥3000</div>
+            </div>
+            <div class="income-item">
+              <div class="inc-icon">📈</div>
+              <div class="inc-info">
+                <div class="inc-name">投资理财</div>
+                <div class="inc-desc">基金 / 股票 / 债券</div>
+              </div>
+              <div class="inc-val">+¥500</div>
+            </div>
+            <div class="income-item">
+              <div class="inc-icon">✍️</div>
+              <div class="inc-info">
+                <div class="inc-name">内容创作</div>
+                <div class="inc-desc">写作 / 视频 / 课程</div>
+              </div>
+              <div class="inc-val">+¥800</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🚀 搞钱想法记录</h3>
+          <div class="money-input-wrap">
+            <input type="text" id="money-idea" placeholder="记录一个赚钱灵感..." />
+            <button id="money-add" class="btn-primary">记录</button>
+          </div>
+          <ul id="money-list" class="note-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🧭 副业探索方向</h3>
+          <div class="resource-list">
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=%E7%94%B5%E5%95%86%E5%B8%A6%E8%B4%A7%20%E6%96%B0%E6%89%8B%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🛒</div>
+              <div>
+                <div class="resource-title">电商 / 带货</div>
+                <div class="resource-desc">选品、供应链、流量变现</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=%E7%9F%A5%E8%AF%86%E4%BB%98%E8%B4%B9%20%E5%89%AF%E4%B8%9A" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🎓</div>
+              <div>
+                <div class="resource-title">知识付费</div>
+                <div class="resource-desc">把技能打包成课程或咨询</div>
+              </div>
+            </a>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91%20%E5%87%BA%E6%B5%B7%20SaaS" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🧩</div>
+              <div>
+                <div class="resource-title">数字产品</div>
+                <div class="resource-desc">模板、插件、独立开发 SaaS</div>
+              </div>
+            </a>
+          </div>
+          <p class="smart-tip">💡 点击方向直达 B站实战教程搜索</p>
+        </div>
+      </section>
+
+      <!-- ⚙️ 设置 -->
+      <section class="tab-panel" id="panel-settings">
+        <div class="card">
+          <h3 class="card-title">🔔 通知设置</h3>
+          <p class="smart-tip">开启后,专注完成、任务到点、倒数日到期会像 App 一样弹系统通知</p>
+          <div class="setting-row">
+            <label>系统通知:</label>
+            <span id="notify-status" style="font-size:13px;color:var(--text-secondary);">未授权</span>
+            <button id="notify-toggle" class="btn-primary">开启通知</button>
+          </div>
+          <div class="setting-row">
+            <label>提示音:</label>
+            <button id="notify-sound-toggle" class="btn-ghost">声音:开</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">⏳ 倒计时设置</h3>
+          <div class="setting-row">
+            <label>目标名称:</label>
+            <input type="text" id="set-cd-name" placeholder="例如:生日、考试、旅行..." />
+          </div>
+          <div class="setting-row">
+            <label>目标日期:</label>
+            <input type="datetime-local" id="set-cd-date" />
+          </div>
+          <button id="save-countdown" class="btn-primary">添加倒数日</button>
+          <h4 class="cd-sub-title">已添加的倒数日</h4>
+          <ul id="cd-manage-list" class="cd-manage-list"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎨 外观主题</h3>
+          <div class="setting-row">
+            <label>主题色:</label>
+            <input type="color" id="theme-color" value="#ff6b35" />
+          </div>
+          <button id="save-theme" class="btn-primary">应用主题</button>
+        </div>
+        <div class="card">
+          <h3 class="card-title">💾 数据管理</h3>
+          <div class="setting-row">
+            <button id="export-data" class="btn-ghost">导出数据</button>
+            <input type="file" id="import-data" accept="application/json" style="display:none" />
+            <button id="trigger-import" class="btn-ghost">导入数据</button>
+            <button id="clear-data" class="btn-danger">清空所有数据</button>
+          </div>
+          <p class="smart-tip">💡 数据默认保存在本浏览器,导出备份可防止丢失</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📂 手机内容导入</h3>
+          <div class="setting-row">
+            <button id="phone-import" class="btn-primary">从手机选择文件</button>
+            <input type="file" id="phone-files" multiple accept="image/*,.txt,.md,.csv,.json" style="display:none" />
+            <span id="phone-msg" style="font-size:12px;color:var(--accent);"></span>
+          </div>
+          <div id="phone-storage" style="font-size:12px;color:var(--text-secondary);margin-top:8px;"></div>
+          <ul id="phone-list" class="note-list" style="margin-top:10px;"></ul>
+          <p class="smart-tip">💡 照片会自动压缩保存,文本(.txt/.md)读取内容;出于隐私限制,浏览器只能读取你手动选择的文件,无法扫描整个手机</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📱 手机访问</h3>
+          <p class="smart-tip">手机与电脑连同一个 Wi-Fi,用手机浏览器扫码打开;在手机浏览器菜单里选「添加到主屏幕」,就能像 App 一样全屏使用</p>
+          <div id="phone-qr" style="background:#fff;padding:10px;border-radius:10px;width:184px;height:184px;margin:10px 0 4px;"></div>
+          <div id="phone-qr-tip" class="smart-tip" style="color:#fbbf24;"></div>
+          <div class="setting-row">
+            <input type="text" id="phone-url" placeholder="http://192.168.x.x:8889" style="flex:1;" />
+          </div>
+          <div class="setting-row">
+            <button id="phone-qr-regen" class="btn-ghost">刷新二维码</button>
+            <button id="phone-copy" class="btn-ghost">复制地址</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 悬浮 AI 助手 -->
+  <div id="ai-assistant" class="ai-assistant" draggable="true">
+    <div class="ai-header" id="ai-header">
+      <span class="ai-avatar">🤖</span>
+      <span class="ai-name">小助手</span>
+      <button class="ai-minimize" id="ai-minimize" type="button">—</button>
+    </div>
+    <div class="ai-body" id="ai-body">
+      <div class="ai-messages" id="ai-messages">
+        <div class="ai-msg ai-bot">
+          你好!我是你的 AI 小助手 🤖<br/>
+          问我任何问题吧,试试这些指令:<br/>
+          <span class="hint-tags">今日 / 统计 / 专注 / 成就 / 加油 / 笑话 / 帮助</span>
+        </div>
+      </div>
+      <div class="ai-input-area">
+        <input type="text" id="ai-input" placeholder="输入消息或指令..." />
+        <button id="ai-send" class="btn-primary small" type="button">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 脚本加载顺序(?v=6 用于破缓存) -->
+  <script src="js/chart.umd.min.js?v=1"></script>
+  <script src="js/marked.min.js?v=1"></script>
+  <script src="js/store.js?v=13"></script>
+  <script src="js/auth.js?v=1"></script>
+  <script src="js/notify.js?v=1"></script>
+  <script src="js/meta.js?v=4"></script>
+  <script src="js/goals.js?v=4"></script>
+  <script src="js/knowledge.js?v=6"></script>
+  <script src="js/dance.js?v=5"></script>
+  <script src="js/sing.js?v=5"></script>
+  <script src="js/study.js?v=4"></script>
+  <script src="js/english.js?v=6"></script>
+  <script src="js/express.js?v=6"></script>
+  <script src="js/law.js?v=4"></script>
+  <script src="js/wellness.js?v=1"></script>
+  <script src="js/books.js?v=3"></script>
+  <script src="js/phone.js?v=2"></script>
+  <script src="js/timetable.js?v=3"></script>
+  <script src="js/planner.js?v=4"></script>
+  <script src="js/outfit.js?v=8"></script>
+  <script src="js/makeup.js?v=6"></script>
+  <script src="js/finance.js?v=6"></script>
+  <script src="js/news.js?v=4"></script>
+  <script src="js/podcast.js?v=4"></script>
+  <script src="js/aistudy.js?v=4"></script>
+  <script src="js/favorites.js?v=5"></script>
+  <script src="js/edit.js?v=6"></script>
+  <script src="js/recommend.js?v=1"></script>
+  <script src="js/resume.js?v=1"></script>
+  <script src="js/focus.js?v=7"></script>
+  <script src="js/money.js?v=4"></script>
+  <script src="js/noise.js?v=2"></script>
+  <script src="js/qrcode.min.js?v=1"></script>
+  <script src="js/ai.js?v=4"></script>
+  <script src="js/settings.js?v=7"></script>
+  <script src="js/main.js?v=14"></script>
+
+</body>
+</html>
