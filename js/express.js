@@ -63,3 +63,142 @@ function initExpress() {
 }
 
 if (typeof window !== 'undefined') window.initExpress = initExpress;
+
+/* ============ 表达录音(MediaRecorder) ============ */
+let _erRecorder = null;
+let _erChunks = [];
+let _erCurBlob = null;
+let _erTimer = null;
+let _erStartTs = 0;
+
+function _erFmtDur(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function _erRenderList() {
+  const ul = document.getElementById('express-rec-list');
+  if (!ul) return;
+  const list = Store.get(Store.KEYS.EXPRESS_RECORDINGS, []);
+  ul.innerHTML = '';
+  if (!list.length) {
+    ul.innerHTML = '<li class="note-item" style="opacity:.5;">还没有录音,按下「开始录音」录一段吧 🎙️</li>';
+    return;
+  }
+  list.forEach(r => {
+    const li = document.createElement('li');
+    li.className = 'express-rec-item';
+    li.innerHTML = `
+      <span>${escapeHtml(r.name || '未命名')} · ${_erFmtDur(r.dur || 0)}</span>
+      <audio controls src="${r.data}"></audio>
+      <button class="express-rec-del" data-id="${r.id}">✕</button>
+    `;
+    ul.appendChild(li);
+  });
+}
+
+function initExpressRec() {
+  const startBtn = $('#express-rec-start');
+  const stopBtn = $('#express-rec-stop');
+  const saveBtn = $('#express-rec-save');
+  const statusEl = $('#express-rec-status');
+  const preview = $('#express-rec-preview');
+  const nameInput = $('#express-rec-name');
+  if (!startBtn || !stopBtn) return;
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    statusEl.textContent = '浏览器不支持录音';
+    startBtn.disabled = true;
+    _erRenderList();
+    return;
+  }
+
+  startBtn.addEventListener('click', async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      _erChunks = [];
+      // 优先用 audio/mp4 (Safari),否则 audio/webm
+      let mime = 'audio/webm';
+      if (MediaRecorder.isTypeSupported('audio/mp4')) mime = 'audio/mp4';
+      else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mime = 'audio/webm;codecs=opus';
+      _erRecorder = new MediaRecorder(stream, { mimeType: mime });
+      _erRecorder.ondataavailable = e => { if (e.data.size > 0) _erChunks.push(e.data); };
+      _erRecorder.onstop = () => {
+        _erCurBlob = new Blob(_erChunks, { type: mime });
+        const url = URL.createObjectURL(_erCurBlob);
+        if (preview) {
+          preview.src = url;
+          preview.style.display = 'block';
+        }
+        if (saveBtn) saveBtn.disabled = false;
+        if (statusEl) statusEl.textContent = '录音完成,可保存或重录';
+        stream.getTracks().forEach(t => t.stop());
+        clearInterval(_erTimer);
+      };
+      _erRecorder.start();
+      _erStartTs = Date.now();
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      if (saveBtn) saveBtn.disabled = true;
+      if (statusEl) statusEl.textContent = '录音中... 00:00';
+      _erTimer = setInterval(() => {
+        const dur = (Date.now() - _erStartTs) / 1000;
+        if (statusEl) statusEl.textContent = `录音中... ${_erFmtDur(dur)}`;
+        if (dur >= 60) stopBtn.click(); // 自动 60 秒封顶
+      }, 250);
+    } catch (e) {
+      if (statusEl) statusEl.textContent = '麦克风授权失败:' + (e.message || e.name);
+    }
+  });
+
+  stopBtn.addEventListener('click', () => {
+    if (_erRecorder && _erRecorder.state !== 'inactive') _erRecorder.stop();
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+  });
+
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      if (!_erCurBlob) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const data = reader.result;
+        const list = Store.get(Store.KEYS.EXPRESS_RECORDINGS, []);
+        list.unshift({
+          id: typeof uid === 'function' ? uid() : 'er_' + Date.now(),
+          name: (nameInput ? nameInput.value.trim() : '') || `录音 ${new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' })}`,
+          data,
+          dur: (Date.now() - _erStartTs) / 1000,
+          ts: Date.now()
+        });
+        if (!Store.set(Store.KEYS.EXPRESS_RECORDINGS, list)) return;
+        if (nameInput) nameInput.value = '';
+        if (preview) { preview.src = ''; preview.style.display = 'none'; }
+        saveBtn.disabled = true;
+        _erCurBlob = null;
+        if (statusEl) statusEl.textContent = '已保存,准备就绪';
+        _erRenderList();
+        showToast('✅ 录音已保存');
+      };
+      reader.readAsDataURL(_erCurBlob);
+    });
+  }
+
+  const ul = $('#express-rec-list');
+  if (ul) {
+    ul.addEventListener('click', e => {
+      const btn = e.target.closest('.express-rec-del');
+      if (!btn) return;
+      if (!confirm('删除这段录音?')) return;
+      const id = btn.dataset.id;
+      const list = Store.get(Store.KEYS.EXPRESS_RECORDINGS, []).filter(x => x.id !== id);
+      Store.set(Store.KEYS.EXPRESS_RECORDINGS, list);
+      _erRenderList();
+    });
+  }
+
+  _erRenderList();
+}
+
+if (typeof window !== 'undefined') window.initExpressRec = initExpressRec;
