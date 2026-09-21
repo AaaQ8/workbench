@@ -8,7 +8,7 @@
     .readonly-banner{position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(90deg,#ff6b35,#f7b731);color:#fff;text-align:center;padding:6px;font-size:13px;font-weight:bold;}
     body.readonly-mode{padding-top:30px;}
   </style>
-  <link rel="stylesheet" href="css/style.css?v=16" />
+  <link rel="stylesheet" href="css/style.css?v=17" />
   <!-- PWA:手机「添加到主屏幕」后可全屏像 App 一样使用 -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d0d0f" />
@@ -1751,6 +1751,64 @@
           <ul id="money-list" class="note-list"></ul>
         </div>
         <div class="card">
+          <h3 class="card-title">🏪 开店盈利评估</h3>
+          <p class="smart-tip">💡 输入地理位置、成本、客流等数据,自动估算这家店赚不赚钱、多久回本</p>
+          <div class="shop-form">
+            <div class="shop-row">
+              <label>店铺类型</label>
+              <select id="shop-type">
+                <option value="餐饮">🍜 餐饮店</option>
+                <option value="零售">🛍️ 零售店</option>
+                <option value="服务">💈 服务店(美业/洗衣等)</option>
+                <option value="其他">📦 其他</option>
+              </select>
+            </div>
+            <div class="shop-row">
+              <label>地段等级</label>
+              <select id="shop-location">
+                <option value="1">🔥 商圈核心(客流大,租金高)</option>
+                <option value="2" selected>🏘️ 社区临街(客流稳定)</option>
+                <option value="3">🏢 写字楼底商(工作日客流)</option>
+                <option value="4">🛣️ 普通街道(客流一般)</option>
+              </select>
+            </div>
+            <div class="shop-row">
+              <label>月租金(元)</label>
+              <input type="text" id="shop-rent" placeholder="如 8000" value="8000" />
+            </div>
+            <div class="shop-row">
+              <label>月人工(元)</label>
+              <input type="text" id="shop-salary" placeholder="如 12000" value="12000" />
+            </div>
+            <div class="shop-row">
+              <label>月水电杂费(元)</label>
+              <input type="text" id="shop-util" placeholder="如 3000" value="3000" />
+            </div>
+            <div class="shop-row">
+              <label>初始投入(元)</label>
+              <input type="text" id="shop-invest" placeholder="装修+设备+加盟,如 150000" value="150000" />
+            </div>
+            <div class="shop-row">
+              <label>客单价(元)</label>
+              <input type="text" id="shop-price" placeholder="如 35" value="35" />
+            </div>
+            <div class="shop-row">
+              <label>日均客流(人)</label>
+              <input type="text" id="shop-traffic" placeholder="如 80" value="80" />
+            </div>
+            <div class="shop-row">
+              <label>毛利率(%)</label>
+              <input type="text" id="shop-margin" placeholder="餐饮约60,零售约30" value="60" />
+            </div>
+            <div class="shop-row">
+              <label>月营业天数</label>
+              <input type="text" id="shop-days" placeholder="如 30" value="30" />
+            </div>
+            <button id="shop-calc" class="btn-primary" style="width:100%;margin-top:8px;">📊 开始评估</button>
+          </div>
+          <div id="shop-result" class="shop-result" style="display:none;"></div>
+        </div>
+        <div class="card">
           <h3 class="card-title">🧭 副业探索方向</h3>
           <div class="resource-list">
             <a class="resource-item" href="https://search.bilibili.com/all?keyword=%E7%94%B5%E5%95%86%E5%B8%A6%E8%B4%A7%20%E6%96%B0%E6%89%8B%E6%95%99%E7%A8%8B" target="_blank" rel="noopener noreferrer">
@@ -1908,12 +1966,12 @@
   <script src="js/recommend.js?v=1"></script>
   <script src="js/resume.js?v=1"></script>
   <script src="js/focus.js?v=7"></script>
-  <script src="js/money.js?v=5"></script>
+  <script src="js/money.js?v=6"></script>
   <script src="js/noise.js?v=2"></script>
   <script src="js/qrcode.min.js?v=1"></script>
   <script src="js/ai.js?v=4"></script>
   <script src="js/settings.js?v=7"></script>
-  <script src="js/main.js?v=16"></script>
+  <script src="js/main.js?v=17"></script>
 
 </body>
 </html>
