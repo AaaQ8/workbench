@@ -197,6 +197,38 @@ function initSettings() {
       });
     }
   }
+
+  // 访问密码设置
+  const pwdStatus = $('#pwd-status');
+  const pwdNew = $('#pwd-new');
+  const pwdConfirm = $('#pwd-confirm');
+  const savePwdBtn = $('#save-pwd');
+
+  function refreshPwdUI() {
+    if (!pwdStatus) return;
+    if (typeof Auth !== 'undefined' && Auth.isEnabled && Auth.isEnabled()) {
+      pwdStatus.textContent = '已开启 🔒';
+      pwdStatus.style.color = 'var(--accent)';
+    } else {
+      pwdStatus.textContent = '未设置';
+      pwdStatus.style.color = 'var(--text-secondary)';
+    }
+  }
+  refreshPwdUI();
+
+  if (savePwdBtn && typeof Auth !== 'undefined') {
+    savePwdBtn.addEventListener('click', () => {
+      const v1 = pwdNew ? pwdNew.value : '';
+      const v2 = pwdConfirm ? pwdConfirm.value : '';
+      if (v1 !== v2) { showToast('两次输入的密码不一致'); return; }
+      if (v1 && v1.length < 4) { showToast('密码至少 4 位'); return; }
+      Auth.setPassword(v1);
+      if (pwdNew) pwdNew.value = '';
+      if (pwdConfirm) pwdConfirm.value = '';
+      refreshPwdUI();
+      showToast(v1 ? '✅ 密码已设置,下次打开需输入' : '✅ 已关闭密码');
+    });
+  }
 }
 
 if (typeof window !== 'undefined') window.initSettings = initSettings;
