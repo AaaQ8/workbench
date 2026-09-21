@@ -162,11 +162,13 @@ function initFinance() {
 
   add.addEventListener('click', () => {
     const type = $('#fin-type').value;
-    const amount = parseFloat($('#fin-amount').value);
-    const category = $('#fin-cat').value.trim();
+    const amountRaw = $('#fin-amount').value.trim();
+    const amount = parseFloat(amountRaw);
+    const category = $('#fin-cat').value.trim() || '未分类';
     const date = $('#fin-date').value || today;
-    if (!amount || amount <= 0) {
-      alert('请输入有效的金额');
+    if (!amountRaw || isNaN(amount) || amount <= 0) {
+      showToast('请输入有效的金额');
+      $('#fin-amount').focus();
       return;
     }
     const list = Store.get(Store.KEYS.FINANCE, []);
@@ -175,8 +177,14 @@ function initFinance() {
     if (!ok) return; // 存储满,Store 已弹窗提示
     $('#fin-amount').value = '';
     $('#fin-cat').value = '';
+    $('#fin-amount').focus();
     loadFinance();
+    showToast(`✅ 已记录 ${type === 'income' ? '收入' : '支出'} ¥${amount.toFixed(2)}`);
   });
+
+  // 回车快捷记账
+  $('#fin-amount')?.addEventListener('keydown', e => { if (e.key === 'Enter') add.click(); });
+  $('#fin-cat')?.addEventListener('keydown', e => { if (e.key === 'Enter') add.click(); });
 
   const ul = $('#fin-list');
   if (ul) {
