@@ -102,6 +102,9 @@ function renderPlChart(all, today) {
     labels.push(`${d.getMonth() + 1}/${d.getDate()}${ds === today ? '(今)' : ''}`);
     rates.push(dayTasks.length ? Math.round(done / dayTasks.length * 100) : 0);
   }
+  // 性能:数据未变则复用已有图表,避免频繁 destroy/recreate
+  const dataKey = labels.join('|') + '|' + rates.join(',');
+  if (_plChart && _plChart._dataKey === dataKey) return;
   if (_plChart) _plChart.destroy();
   _plChart = new Chart(canvas, {
     type: 'bar',
@@ -124,6 +127,7 @@ function renderPlChart(all, today) {
       }
     }
   });
+  _plChart._dataKey = dataKey;
 }
 
 function initPlanner() {
