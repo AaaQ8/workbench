@@ -194,6 +194,7 @@ function startCountdown() {
   _cdRenderList();
   _cdRenderManageList();
 
+  const _cdNotified = new Set();
   // 每秒刷新所有卡片
   function tick() {
     const now = Date.now();
@@ -212,6 +213,15 @@ function startCountdown() {
         spans[2].textContent = f.sec;
       }
       card.classList.toggle('cd-past', past);
+      // 倒数日到点(进入 0 或负数)弹一次通知
+      const id = card.dataset.id;
+      if (past && id && !_cdNotified.has(id)) {
+        _cdNotified.add(id);
+        const name = (card.querySelector('.cd-card-name') || {}).textContent || '目标';
+        if (typeof Notify !== 'undefined') {
+          Notify.push('🎯 倒数日到了', { body: `「${name}」的日子到啦!`, tag: 'cd-' + id });
+        }
+      }
     });
   }
   tick();
@@ -489,6 +499,13 @@ document.addEventListener('click', e => {
     window.open(href, '_blank', 'noopener,noreferrer');
   }
 });
+
+// 注册 Service Worker(让 PWA 支持后台通知 + 离线)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    if (typeof Notify !== 'undefined') Notify._swReg = reg;
+  }).catch(() => {});
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   Store.dailyReset();
