@@ -1,4 +1,14 @@
 let _quotaWarned = false;
+// 安全:只允许读写本应用前缀的 localStorage 键,防止恶意读写其他站点数据
+const _STORE_ALLOWED = new Set();
+function _isAllowedKey(key) {
+  if (typeof key !== 'string') return false;
+  if (_STORE_ALLOWED.size === 0) {
+    // 懒加载允许列表(KEYS 的所有值)
+    Object.values(Store.KEYS).forEach(k => _STORE_ALLOWED.add(k));
+  }
+  return _STORE_ALLOWED.has(key) || key.startsWith('pw_');
+}
 
 const Store = {
   KEYS: {
@@ -41,6 +51,7 @@ const Store = {
   },
 
   get(key, def) {
+    if (!_isAllowedKey(key)) return def;
     try {
       const raw = localStorage.getItem(key);
       if (raw === null) return def;
@@ -49,6 +60,7 @@ const Store = {
   },
 
   set(key, val) {
+    if (!_isAllowedKey(key)) return false;
     try {
       localStorage.setItem(key, JSON.stringify(val));
       return true;
@@ -92,14 +104,55 @@ const Store = {
   import(json) {
     const data = JSON.parse(json);
     Object.entries(data).forEach(([k, v]) => {
-      if (v !== undefined && v !== null) this.set(k, v);
+      // 只导入本应用允许的键,防止恶意注入
+      if (_isAllowedKey(k) && v !== undefined && v !== null) this.set(k, v);
     });
   },
 
   clear() {
-    localStorage.clear();
+    // 只清除本应用前缀的键,不影响其他站点
+    try {
+      const toRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('pw_')) toRemove.push(k);
+      }
+      toRemove.forEach(k => localStorage.removeItem(k));
+    } catch {}
   }
 };
+
+/* ---------- 工具函数 ---------- */
+function escapeHtml(str) {
+  if (str == null) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+/* 防抖:高频事件(输入/滚动/resize)合并为最后一次执行 */
+function debounce(fn, wait) {
+  let t;
+  return function (...args) {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
+
+/* 节流:固定时间间隔最多执行一次 */
+function throttle(fn, wait) {
+  let last = 0, t;
+  return function (...args) {
+    const now = Date.now();
+    if (now - last >= wait) {
+      last = now;
+      fn.apply(this, args);
+    } else {
+      clearTimeout(t);
+      t = setTimeout(() => { last = Date.now(); fn.apply(this, args); }, wait - (now - last));
+    }
+  };
+}
 
 const $  = sel => document.querySelector(sel);
 const $$ = sel => document.querySelectorAll(sel);
@@ -111,10 +164,4 @@ function uid() {
 function formatDate(ts) {
   const d = new Date(ts);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
 }
