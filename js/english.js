@@ -283,26 +283,77 @@ function renderTodayWords() {
     const div = document.createElement('div');
     div.className = 'word-item';
     div.innerHTML =
-      '<div class="word-en">🔊 ' + escapeHtml(w.en) + '</div>' +
+      '<div class="word-en"><span class="speak-btn" data-text="' + escapeHtml(w.en) + '">🔊</span> ' + escapeHtml(w.en) + '</div>' +
       '<div class="word-cn">' + escapeHtml(w.cn) + '</div>' +
-      '<div class="word-example">' + escapeHtml(w.ex) + '</div>';
-    div.addEventListener('click', () => speakWord(w.en));
+      '<div class="word-example"><span class="speak-btn small" data-text="' + escapeHtml(w.ex) + '">🔊</span> ' + escapeHtml(w.ex) + '</div>';
     box.appendChild(div);
+  }
+  // 发音按钮事件委托
+  box.querySelectorAll('.speak-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      speakWord(btn.dataset.text);
+    });
+  });
+}
+
+// 发音:优先系统 TTS,失败/不支持时用有道在线发音(国内手机可用)
+let _ttsAudio = null;
+function speakWord(text) {
+  if (!text) return;
+  // 尝试系统 TTS
+  if ('speechSynthesis' in window) {
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US';
+      u.rate = 0.9;
+      // 兜底:如果 1.5 秒内没开始发声,改用在线 TTS
+      let fallbackTimer = setTimeout(() => {
+        _speakOnline(text);
+      }, 1500);
+      u.onstart = () => clearTimeout(fallbackTimer);
+      u.onerror = () => { clearTimeout(fallbackTimer); _speakOnline(text); };
+      speechSynthesis.speak(u);
+      return;
+    } catch (e) { /* fallthrough to online */ }
+  }
+  _speakOnline(text);
+}
+
+function _speakOnline(text) {
+  try {
+    if (_ttsAudio) {
+      _ttsAudio.pause();
+      _ttsAudio = null;
+    }
+    // 有道词典发音接口,国内可访问
+    const url = 'https://dict.youdao.com/dictvoice?type=2&audio=' + encodeURIComponent(text);
+    _ttsAudio = new Audio(url);
+    _ttsAudio.play().catch(() => {
+      showToast('发音加载失败,请检查网络');
+    });
+  } catch (e) {
+    showToast('当前环境无法发音');
   }
 }
 
-function speakWord(text) {
-  if (!('speechSynthesis' in window)) {
-    showToast('当前浏览器不支持发音');
-    return;
-  }
-  try {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'en-US';
-    u.rate = 0.9;
-    speechSynthesis.speak(u);
-  } catch (e) { /* 忽略发音失败 */ }
+/* 打开「不背单词」App */
+function openBudouApp() {
+  const now = Date.now();
+  // Android scheme
+  window.location.href = 'budouwords://';
+  setTimeout(() => {
+    if (Date.now() - now < 2500 && document.visibilityState === 'visible') {
+      // 没跳转成功,打开应用商店或网页版
+      const ua = navigator.userAgent.toLowerCase();
+      if (ua.includes('iphone') || ua.includes('ipad')) {
+        window.location.href = 'https://apps.apple.com/cn/app/id1015043531';
+      } else {
+        window.location.href = 'https://www.budou.com/';
+      }
+    }
+  }, 2000);
 }
 
 /* ---------------- 词汇进度 ---------------- */
@@ -465,4 +516,8 @@ function renderCetScoreChart(scores) {
   });
 }
 
-if (typeof window !== 'undefined') window.initEnglish = initEnglish;
+if (typeof window !== 'undefined') {
+  window.initEnglish = initEnglish;
+  window.openBudouApp = openBudouApp;
+  window.speakWord = speakWord;
+}
