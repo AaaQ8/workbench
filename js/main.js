@@ -507,7 +507,12 @@ if ('serviceWorker' in navigator) {
   }).catch(() => {});
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// 只读模式检测(view.html 或 index.html?view=1)
+if (window._READONLY || /[?&]view=1/.test(location.search)) {
+  document.body.classList.add('readonly-mode');
+}
+
+function initApp() {
   Store.dailyReset();
   updateClock();
   setInterval(updateClock, 1000);
@@ -593,4 +598,13 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('pagehide', () => {
     try { sessionStorage.setItem('pw_last_scroll', String(window.scrollY || 0)); } catch (e) {}
   });
+}
+
+// 访问密码守卫:开启密码时需输入正确才能进入
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof Auth !== 'undefined' && Auth.isEnabled && Auth.isEnabled()) {
+    Auth.requireAuth(initApp);
+  } else {
+    initApp();
+  }
 });
