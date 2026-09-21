@@ -140,7 +140,106 @@ function initIncomeChannels() {
   render();
 }
 
+/* ===== 开店盈利评估 ===== */
+function _shopVal(id) {
+  const el = document.getElementById(id);
+  return el ? parseFloat(el.value) || 0 : 0;
+}
+
+function initShopEval() {
+  const calcBtn = $('#shop-calc');
+  const resultEl = $('#shop-result');
+  if (!calcBtn || !resultEl) return;
+
+  // 地段客流系数(用于给出客流建议)
+  const LOCATION_FACTOR = { '1': 1.5, '2': 1.0, '3': 0.8, '4': 0.5 };
+
+  function calc() {
+    const type = $('#shop-type').value;
+    const loc = $('#shop-location').value;
+    const rent = _shopVal('shop-rent');
+    const salary = _shopVal('shop-salary');
+    const util = _shopVal('shop-util');
+    const invest = _shopVal('shop-invest');
+    const price = _shopVal('shop-price');
+    const traffic = _shopVal('shop-traffic');
+    const margin = _shopVal('shop-margin') / 100;
+    const days = _shopVal('shop-days') || 30;
+
+    if (!price || !traffic || !margin) {
+      showToast('请填写客单价、客流和毛利率');
+      return;
+    }
+
+    const dailyRev = price * traffic;
+    const monthlyRev = dailyRev * days;
+    const monthlyGross = monthlyRev * margin;
+    const monthlyFixed = rent + salary + util;
+    const monthlyProfit = monthlyGross - monthlyFixed;
+    const profitRate = monthlyRev > 0 ? (monthlyProfit / monthlyRev * 100) : 0;
+
+    // 盈亏平衡:需要的日均客流
+    const breakEvenDaily = monthlyFixed / (price * margin * days);
+    // 回本周期(月)
+    const paybackMonths = monthlyProfit > 0 ? (invest / monthlyProfit) : Infinity;
+
+    // 地段建议客流(参考值)
+    const suggestedTraffic = Math.round(80 * (LOCATION_FACTOR[loc] || 1));
+
+    // 结论
+    let conclusion, color, advice;
+    if (monthlyProfit > 0 && paybackMonths <= 24) {
+      conclusion = '✅ 值得开';
+      color = 'var(--success)';
+      advice = `月净利润 ¥${monthlyProfit.toFixed(0)},预计 ${paybackMonths.toFixed(1)} 个月回本,回本周期在 2 年内,风险可控。`;
+    } else if (monthlyProfit > 0 && paybackMonths > 24) {
+      conclusion = '⚠️ 谨慎考虑';
+      color = 'var(--warning)';
+      advice = `虽然盈利,但回本需 ${paybackMonths.toFixed(1)} 个月(超过 2 年),建议想办法降低初始投入或提升客流。`;
+    } else if (monthlyProfit === 0) {
+      conclusion = '➖ 持平';
+      color = 'var(--text-secondary)';
+      advice = '刚好盈亏平衡,没有利润空间,不建议开。';
+    } else {
+      conclusion = '❌ 不建议开';
+      color = 'var(--danger)';
+      advice = `每月亏损 ¥${Math.abs(monthlyProfit).toFixed(0)}。要盈利,日均客流至少需 ${Math.ceil(breakEvenDaily)} 人(当前 ${traffic} 人)。`;
+    }
+
+    // 地段提示
+    let locTip = '';
+    if (traffic < suggestedTraffic * 0.6) {
+      locTip = `⚠️ 当前客流偏低,该地段参考客流约 ${suggestedTraffic} 人/天,建议重新评估选址或加强引流。`;
+    } else if (traffic > suggestedTraffic * 1.3) {
+      locTip = `💡 客流高于该地段平均水平,选址不错。`;
+    }
+
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `
+      <div class="shop-conclusion" style="color:${color};">${conclusion}</div>
+      <div class="shop-grid">
+        <div class="shop-stat"><div class="ss-label">日营收</div><div class="ss-val">¥${dailyRev.toFixed(0)}</div></div>
+        <div class="shop-stat"><div class="ss-label">月营收</div><div class="ss-val">¥${monthlyRev.toFixed(0)}</div></div>
+        <div class="shop-stat"><div class="ss-label">月毛利</div><div class="ss-val">¥${monthlyGross.toFixed(0)}</div></div>
+        <div class="shop-stat"><div class="ss-label">月固定成本</div><div class="ss-val">¥${monthlyFixed.toFixed(0)}</div></div>
+        <div class="shop-stat"><div class="ss-label">月净利润</div><div class="ss-val" style="color:${monthlyProfit>=0?'var(--success)':'var(--danger)'}">¥${monthlyProfit.toFixed(0)}</div></div>
+        <div class="shop-stat"><div class="ss-label">净利率</div><div class="ss-val">${profitRate.toFixed(1)}%</div></div>
+        <div class="shop-stat"><div class="ss-label">盈亏平衡客流</div><div class="ss-val">${Math.ceil(breakEvenDaily)} 人/天</div></div>
+        <div class="shop-stat"><div class="ss-label">回本周期</div><div class="ss-val">${isFinite(paybackMonths) ? paybackMonths.toFixed(1) + ' 个月' : '无法回本'}</div></div>
+      </div>
+      <div class="shop-advice">
+        <p><b>分析建议:</b> ${advice}</p>
+        ${locTip ? `<p>${locTip}</p>` : ''}
+        <p style="color:var(--text-secondary);font-size:12px;">💡 提示:以上为静态估算,实际还需考虑竞争、淡旺季、损耗、营销费用等因素。建议先用保守客流(×0.7)再算一遍。</p>
+      </div>
+    `;
+  }
+
+  calcBtn.addEventListener('click', calc);
+}
+
 if (typeof window !== 'undefined') {
   window.initMoney = initMoney;
   window.initIncomeChannels = initIncomeChannels;
+  window.initShopEval = initShopEval;
 }
