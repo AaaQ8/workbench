@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>个人工作台</title>
-  <link rel="stylesheet" href="css/style.css?v=13" />
+  <link rel="stylesheet" href="css/style.css?v=14" />
   <!-- PWA:手机「添加到主屏幕」后可全屏像 App 一样使用 -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d0d0f" />
@@ -554,6 +554,15 @@
         <div class="card">
           <h3 class="card-title">🎵 待练歌曲</h3>
           <ul class="media-list" id="rec-sing-songs"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎶 我的歌单</h3>
+          <p class="smart-tip">💡 可从汽水音乐导入歌单,点歌曲直达 B站搜伴奏/翻唱</p>
+          <div class="study-input-wrap">
+            <button id="sing-import-qishui" class="btn-primary">从汽水音乐导入</button>
+            <button id="sing-clear-playlist" class="btn-ghost">清空</button>
+          </div>
+          <ul class="media-list" id="sing-playlist"></ul>
         </div>
         <div class="card">
           <h3 class="card-title">🎤 今日跟练</h3>
@@ -1913,7 +1922,7 @@
   <script src="js/goals.js?v=4"></script>
   <script src="js/knowledge.js?v=6"></script>
   <script src="js/dance.js?v=5"></script>
-  <script src="js/sing.js?v=5"></script>
+  <script src="js/sing.js?v=6"></script>
   <script src="js/study.js?v=4"></script>
   <script src="js/english.js?v=6"></script>
   <script src="js/express.js?v=6"></script>
@@ -1939,7 +1948,7 @@
   <script src="js/qrcode.min.js?v=1"></script>
   <script src="js/ai.js?v=4"></script>
   <script src="js/settings.js?v=7"></script>
-  <script src="js/main.js?v=14"></script>
+  <script src="js/main.js?v=15"></script>
 
 </body>
 </html>
