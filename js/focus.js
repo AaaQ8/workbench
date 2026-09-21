@@ -49,7 +49,11 @@ function endFocus() {
   updateFocusStats();
   renderFocusChart();
   playBeep();
-  setTimeout(() => alert(`专注完成！🎉 已专注 ${minutes} 分钟`), 100);
+  if (typeof Notify !== 'undefined') {
+    Notify.push('🎉 专注完成', { body: `已专注 ${minutes} 分钟,休息一下吧~`, tag: 'focus-done' });
+  } else {
+    setTimeout(() => alert(`专注完成！🎉 已专注 ${minutes} 分钟`), 100);
+  }
 }
 
 /* ---------- 专注历史记录 + 图表(Chart.js) ---------- */
