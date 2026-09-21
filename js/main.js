@@ -574,6 +574,7 @@ function initApp() {
   safeInit('focus',     typeof window.initFocus     !== 'undefined' ? window.initFocus     : null);
   safeInit('noise',     typeof window.initNoise     !== 'undefined' ? window.initNoise     : null);
   safeInit('money',     typeof window.initMoney     !== 'undefined' ? window.initMoney     : null);
+  safeInit('income',    typeof window.initIncomeChannels !== 'undefined' ? window.initIncomeChannels : null);
   safeInit('ai',        typeof window.initAI       !== 'undefined' ? window.initAI       : null);
   safeInit('settings',  typeof window.initSettings  !== 'undefined' ? window.initSettings  : null);
 
