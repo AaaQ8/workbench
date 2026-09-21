@@ -119,7 +119,59 @@ const Store = {
       }
       toRemove.forEach(k => localStorage.removeItem(k));
     } catch {}
-  }
+  },
+
+  /* IndexedDB 大文件存储:突破 localStorage 5MB 限制,存录音/照片等大数据
+     接口异步(get/set/remove 返回 Promise),小数据仍用上面的同步 get/set */
+  idb: (function () {
+    let dbPromise = null;
+    function open() {
+      if (dbPromise) return dbPromise;
+      dbPromise = new Promise((resolve, reject) => {
+        try {
+          const req = indexedDB.open('pw_bigstore', 1);
+          req.onupgradeneeded = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        } catch (e) { reject(e); }
+      });
+      return dbPromise;
+    }
+    function tx(mode) {
+      return open().then(db => {
+        const t = db.transaction('kv', mode);
+        return { store: t.objectStore('kv'), done: new Promise((res, rej) => {
+          t.oncomplete = () => res(true);
+          t.onerror = () => rej(t.error);
+          t.onabort = () => rej(t.error);
+        })};
+      });
+    }
+    return {
+      get(key) {
+        return tx('readonly').then(({ store }) => new Promise((res, rej) => {
+          const req = store.get(key);
+          req.onsuccess = () => res(req.result);
+          req.onerror = () => rej(req.error);
+        }));
+      },
+      set(key, val) {
+        return tx('readwrite').then(({ store, done }) => {
+          store.put(val, key);
+          return done;
+        });
+      },
+      remove(key) {
+        return tx('readwrite').then(({ store, done }) => {
+          store.delete(key);
+          return done;
+        });
+      }
+    };
+  })()
 };
 
 /* ---------- 工具函数 ---------- */
