@@ -1777,6 +1777,19 @@
       <!-- ⚙️ 设置 -->
       <section class="tab-panel" id="panel-settings">
         <div class="card">
+          <h3 class="card-title">🔔 通知设置</h3>
+          <p class="smart-tip">开启后,专注完成、任务到点、倒数日到期会像 App 一样弹系统通知</p>
+          <div class="setting-row">
+            <label>系统通知:</label>
+            <span id="notify-status" style="font-size:13px;color:var(--text-secondary);">未授权</span>
+            <button id="notify-toggle" class="btn-primary">开启通知</button>
+          </div>
+          <div class="setting-row">
+            <label>提示音:</label>
+            <button id="notify-sound-toggle" class="btn-ghost">声音:开</button>
+          </div>
+        </div>
+        <div class="card">
           <h3 class="card-title">⏳ 倒计时设置</h3>
           <div class="setting-row">
             <label>目标名称:</label>
@@ -1863,6 +1876,7 @@
   <script src="js/chart.umd.min.js?v=1"></script>
   <script src="js/marked.min.js?v=1"></script>
   <script src="js/store.js?v=13"></script>
+  <script src="js/notify.js?v=1"></script>
   <script src="js/meta.js?v=4"></script>
   <script src="js/goals.js?v=4"></script>
   <script src="js/knowledge.js?v=6"></script>
@@ -1876,7 +1890,7 @@
   <script src="js/books.js?v=2"></script>
   <script src="js/phone.js?v=2"></script>
   <script src="js/timetable.js?v=3"></script>
-  <script src="js/planner.js?v=3"></script>
+  <script src="js/planner.js?v=4"></script>
   <script src="js/outfit.js?v=8"></script>
   <script src="js/makeup.js?v=6"></script>
   <script src="js/finance.js?v=6"></script>
@@ -1887,13 +1901,13 @@
   <script src="js/edit.js?v=5"></script>
   <script src="js/recommend.js?v=1"></script>
   <script src="js/resume.js?v=1"></script>
-  <script src="js/focus.js?v=5"></script>
+  <script src="js/focus.js?v=6"></script>
   <script src="js/money.js?v=4"></script>
   <script src="js/noise.js?v=2"></script>
   <script src="js/qrcode.min.js?v=1"></script>
   <script src="js/ai.js?v=4"></script>
-  <script src="js/settings.js?v=5"></script>
-  <script src="js/main.js?v=11"></script>
+  <script src="js/settings.js?v=6"></script>
+  <script src="js/main.js?v=12"></script>
 
 </body>
 </html>
