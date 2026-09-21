@@ -41,6 +41,7 @@ function endFocus() {
   const today = Store.get(Store.KEYS.FOCUS_TODAY, 0) + minutes;
   Store.set(Store.KEYS.FOCUS_TOTAL, total);
   Store.set(Store.KEYS.FOCUS_TODAY, today);
+  Store.set('pw_focus_count', Store.get('pw_focus_count', 0) + 1);
   recordFocusHistory(minutes);
   const btn = $('#focus-start');
   if (btn) btn.textContent = '开始';
@@ -124,13 +125,25 @@ function setFocusDuration(min) {
   renderFocus();
 }
 
+// 分钟数转友好时长:125 -> "2小时5分"
+function _fmtFocusDuration(min) {
+  min = Math.round(min || 0);
+  if (min < 60) return min + ' 分钟';
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h}小时${m}分` : `${h}小时`;
+}
+
 function updateFocusStats() {
   const today = Store.get(Store.KEYS.FOCUS_TODAY, 0);
   const total = Store.get(Store.KEYS.FOCUS_TOTAL, 0);
+  const count = Store.get('pw_focus_count', 0);
   const tEl = $('#focus-today');
   const totEl = $('#focus-total');
-  if (tEl) tEl.textContent = today;
-  if (totEl) totEl.textContent = total;
+  if (tEl) tEl.textContent = _fmtFocusDuration(today);
+  if (totEl) totEl.textContent = _fmtFocusDuration(total);
+  const cntEl = $('#focus-count');
+  if (cntEl) cntEl.textContent = count;
 }
 
 function playBeep() {
