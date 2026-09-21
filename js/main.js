@@ -276,6 +276,7 @@ function initTabs() {
       const panelId = 'panel-' + item.dataset.panel;
       const panel = document.getElementById(panelId);
       if (panel) panel.classList.add('active');
+      try { sessionStorage.setItem('pw_active_panel', panelId); } catch (e) {}
       window.scrollTo(0, 0);
       // 移动端选择模块后自动收起抽屉,露出内容
       if (isMobile()) closeDrawer();
@@ -444,11 +445,73 @@ function safeInit(name, fn) {
   }
 }
 
+// 移动端外链优先跳转 App,失败再开网页
+const APP_SCHEME_MAP = {
+  'bilibili.com': 'bilibili://',
+  'douyin.com': 'snssdk1128://',
+  'zhihu.com': 'zhihu://',
+  'xiaohongshu.com': 'xhsdiscover://',
+  'weibo.com': 'weibo://',
+  'youtube.com': 'vnd.youtube://',
+  'youtu.be': 'vnd.youtube://',
+  'github.com': 'github://'
+};
+function _matchAppScheme(href) {
+  const lower = (href || '').toLowerCase();
+  for (const domain in APP_SCHEME_MAP) {
+    if (lower.includes(domain)) return APP_SCHEME_MAP[domain];
+  }
+  return null;
+}
+
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[target="_blank"]');
+  if (!a) return;
+  const href = a.href;
+  const scheme = _matchAppScheme(href);
+  if (!scheme) return;
+  // 仅移动端尝试 App 跳转
+  if (!/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+  e.preventDefault();
+  const start = Date.now();
+  const fallback = setTimeout(() => {
+    if (Date.now() - start < 2500) {
+      window.open(href, '_blank', 'noopener,noreferrer');
+    }
+  }, 1800);
+  const onHide = () => {
+    clearTimeout(fallback);
+    document.removeEventListener('visibilitychange', onHide);
+  };
+  document.addEventListener('visibilitychange', onHide);
+  try { location.href = scheme; } catch (err) {
+    clearTimeout(fallback);
+    window.open(href, '_blank', 'noopener,noreferrer');
+  }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   Store.dailyReset();
   updateClock();
   setInterval(updateClock, 1000);
   initTabs();
+
+  // 恢复上次所在模块(点外链/切后台回来若被刷新,可回到原位置)
+  try {
+    const lastPanel = sessionStorage.getItem('pw_active_panel');
+    if (lastPanel) {
+      const panel = document.getElementById(lastPanel);
+      const navName = lastPanel.replace('panel-', '');
+      const navItem = document.querySelector(`.nav-item[data-panel="${navName}"]`);
+      if (panel && navItem) {
+        $$('.nav-item').forEach(t => t.classList.remove('active'));
+        $$('.tab-panel').forEach(p => p.classList.remove('active'));
+        navItem.classList.add('active');
+        panel.classList.add('active');
+      }
+    }
+  } catch (e) {}
+
   startCountdown();
   initTodos();
   loadTodos();
@@ -473,6 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
   safeInit('planner',   typeof window.initPlanner   !== 'undefined' ? window.initPlanner   : null);
   safeInit('outfit',    typeof window.initOutfit    !== 'undefined' ? window.initOutfit    : null);
   safeInit('makeup',    typeof window.initMakeup    !== 'undefined' ? window.initMakeup    : null);
+  safeInit('makeupFavs',typeof window.initMakeupFavs!== 'undefined' ? window.initMakeupFavs: null);
   safeInit('finance',   typeof window.initFinance   !== 'undefined' ? window.initFinance   : null);
   safeInit('news',      typeof window.initNews      !== 'undefined' ? window.initNews      : null);
   safeInit('podcast',   typeof window.initPodcast   !== 'undefined' ? window.initPodcast   : null);
@@ -488,4 +552,27 @@ document.addEventListener('DOMContentLoaded', () => {
   safeInit('money',     typeof window.initMoney     !== 'undefined' ? window.initMoney     : null);
   safeInit('ai',        typeof window.initAI       !== 'undefined' ? window.initAI       : null);
   safeInit('settings',  typeof window.initSettings  !== 'undefined' ? window.initSettings  : null);
+
+  // 恢复滚动位置(点外链回来若被刷新,回到原滚动处)
+  try {
+    const lastScroll = parseInt(sessionStorage.getItem('pw_last_scroll'), 10);
+    if (lastScroll > 0) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => window.scrollTo(0, lastScroll));
+      });
+    }
+  } catch (e) {}
+
+  // 离开页面时保存滚动位置
+  let _scrollTimer = null;
+  window.addEventListener('scroll', () => {
+    if (_scrollTimer) return;
+    _scrollTimer = setTimeout(() => {
+      _scrollTimer = null;
+      try { sessionStorage.setItem('pw_last_scroll', String(window.scrollY || 0)); } catch (e) {}
+    }, 200);
+  }, { passive: true });
+  window.addEventListener('pagehide', () => {
+    try { sessionStorage.setItem('pw_last_scroll', String(window.scrollY || 0)); } catch (e) {}
+  });
 });
