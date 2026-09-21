@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>个人工作台</title>
-  <link rel="stylesheet" href="css/style.css?v=6" />
+  <link rel="stylesheet" href="css/style.css?v=7" />
   <!-- PWA:手机「添加到主屏幕」后可全屏像 App 一样使用 -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d0d0f" />
@@ -201,6 +201,9 @@
             <button class="nav-item" data-panel="edit">
               <span class="nav-icon">✂️</span><span class="nav-label">剪辑</span>
             </button>
+            <button class="nav-item" data-panel="resume">
+              <span class="nav-icon">📄</span><span class="nav-label">简历</span>
+            </button>
           </nav>
         </div>
       </div>
@@ -242,26 +245,9 @@
       <!-- 🏠 首页 -->
       <section class="tab-panel active" id="panel-home">
         <div class="card countdown-card">
-          <h3 class="card-title">⏳ 距离目标</h3>
-          <div class="countdown-display">
-            <div class="countdown-item">
-              <span class="cd-num" id="cd-days">00</span>
-              <span class="cd-label">天</span>
-            </div>
-            <div class="countdown-item">
-              <span class="cd-num" id="cd-hours">00</span>
-              <span class="cd-label">时</span>
-            </div>
-            <div class="countdown-item">
-              <span class="cd-num" id="cd-min">00</span>
-              <span class="cd-label">分</span>
-            </div>
-            <div class="countdown-item">
-              <span class="cd-num" id="cd-sec">00</span>
-              <span class="cd-label">秒</span>
-            </div>
-          </div>
-          <p class="countdown-name" id="cd-name">设置一个倒计时目标吧 →</p>
+          <h3 class="card-title">⏳ 倒数日</h3>
+          <div id="cd-list" class="cd-list"></div>
+          <p id="cd-empty" class="countdown-empty">还没有倒数日,到「设置 ⚙️」里加一个吧 →</p>
         </div>
 
         <div class="card todolist-card">
@@ -567,12 +553,11 @@
         </div>
         <div class="card">
           <h3 class="card-title">🎵 待练歌曲</h3>
-          <ul class="media-list">
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=%E5%A6%82%E6%84%BF%20%E4%BC%B4%E5%A5%8F" target="_blank" rel="noopener">🎵 王菲 - 如愿 <span class="tag">抒情</span><span class="tag">高难度</span></a>
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=%E6%B5%AE%E5%A4%B8%20%E4%BC%B4%E5%A5%8F" target="_blank" rel="noopener">🎵 陈奕迅 - 浮夸 <span class="tag">粤语</span><span class="tag">技巧</span></a>
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=%E5%85%89%E5%B9%B4%E4%B9%8B%E5%A4%96%20%E4%BC%B4%E5%A5%8F" target="_blank" rel="noopener">🎵 邓紫棋 - 光年之外 <span class="tag">流行</span></a>
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=%E5%A4%A7%E9%B1%BC%20%E4%BC%B4%E5%A5%8F" target="_blank" rel="noopener">🎵 周深 - 大鱼 <span class="tag">空灵</span></a>
-          </ul>
+          <ul class="media-list" id="rec-sing-songs"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎤 今日跟练</h3>
+          <ul class="media-list" id="rec-sing-practice"></ul>
         </div>
         <div class="card">
           <h3 class="card-title">📊 音域训练</h3>
@@ -600,11 +585,7 @@
         </div>
         <div class="card">
           <h3 class="card-title">📚 正在读的书</h3>
-          <ul class="media-list">
-            <a class="media-item" href="https://www.douban.com/search?cat=1001&q=%E5%8E%9F%E5%AD%90%E4%B9%A0%E6%83%AF" target="_blank" rel="noopener">📖 《原子习惯》 James Clear <span class="tag">自我成长</span></a>
-            <a class="media-item" href="https://www.douban.com/search?cat=1001&q=%E6%80%9D%E8%80%83%20%E5%BF%AB%E4%B8%8E%E6%85%A2" target="_blank" rel="noopener">📖 《思考,快与慢》 丹尼尔·卡尼曼 <span class="tag">心理学</span></a>
-            <a class="media-item" href="https://www.douban.com/search?cat=1001&q=%E5%8E%9F%E5%88%99%20%E7%91%9E%E8%BE%BE%E5%88%A9%E6%AC%A7" target="_blank" rel="noopener">📖 《原则》 瑞·达利欧 <span class="tag">商业</span></a>
-          </ul>
+          <ul class="media-list" id="rec-study-books"></ul>
         </div>
         <div class="card">
           <h3 class="card-title">⚡ 费曼学习法</h3>
@@ -754,22 +735,24 @@
 
       <!-- 💬 表达 -->
       <section class="tab-panel" id="panel-express">
+        <div class="card express-rec-card">
+          <h3 class="card-title">🎙️ 表达录音</h3>
+          <p class="smart-tip">💡 录一段表达练习,自动存到本地;受 5MB 限制,建议每段不超过 30 秒</p>
+          <div class="express-rec-controls">
+            <button id="express-rec-start">⏺ 开始录音</button>
+            <button id="express-rec-stop" disabled>⏹ 停止</button>
+            <span id="express-rec-status" class="express-rec-status">准备就绪</span>
+          </div>
+          <audio id="express-rec-preview" controls style="display:none;width:100%;margin-top:8px;"></audio>
+          <div class="study-input-wrap" style="margin-top:8px;">
+            <input type="text" id="express-rec-name" placeholder="给这段录音起个名字(可选)" style="flex:1;" />
+            <button id="express-rec-save" class="btn-primary" disabled>保存录音</button>
+          </div>
+          <ul id="express-rec-list" class="note-list" style="margin-top:10px;"></ul>
+        </div>
         <div class="card">
           <h3 class="card-title">💬 表达练习题目</h3>
-          <div class="prompt-list">
-            <div class="prompt-item">
-              <div class="prompt-q">今日话题 #1</div>
-              <div class="prompt-text">用 1 分钟介绍你最近最喜欢的一部电影,说出为什么推荐</div>
-            </div>
-            <div class="prompt-item">
-              <div class="prompt-q">今日话题 #2</div>
-              <div class="prompt-text">即兴演讲:假设你要向朋友推荐一款产品,你会怎么说?</div>
-            </div>
-            <div class="prompt-item">
-              <div class="prompt-q">今日话题 #3</div>
-              <div class="prompt-text">结构化表达练习:用「问题-方案-收益」结构说清一个观点</div>
-            </div>
-          </div>
+          <div class="prompt-list" id="rec-express-prompts"></div>
         </div>
         <div class="card">
           <h3 class="card-title">📐 金字塔原理</h3>
@@ -796,25 +779,11 @@
       <section class="tab-panel" id="panel-law">
         <div class="card">
           <h3 class="card-title">⚖️ 法律小课堂</h3>
-          <div class="law-article">
-            <div class="law-title">📌 租房必知的 5 个法律常识</div>
-            <div class="law-content">
-              1. 合同期限不超过 20 年,超过无效<br/>
-              2. 租赁期内房屋买卖不影响租赁合同<br/>
-              3. 出租人维修义务的例外<br/>
-              4. 押金退还的时间限制<br/>
-              5. 转租需经出租人书面同意
-            </div>
-          </div>
+          <div id="rec-law-article"></div>
         </div>
         <div class="card">
           <h3 class="card-title">📖 正在学习的法规</h3>
-          <ul class="media-list">
-            <a class="media-item" href="https://baike.baidu.com/item/%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E6%B0%91%E6%B3%95%E5%85%B8" target="_blank" rel="noopener">📖 《民法典》合同编 <span class="tag">重点</span></a>
-            <a class="media-item" href="https://baike.baidu.com/item/%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8A%B3%E5%8A%A8%E5%90%88%E5%90%8C%E6%B3%95" target="_blank" rel="noopener">📖 《劳动合同法》 <span class="tag">职场</span></a>
-            <a class="media-item" href="https://baike.baidu.com/item/%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E6%B6%88%E8%B4%B9%E8%80%85%E6%9D%83%E7%9B%8A%E4%BF%9D%E6%8A%A4%E6%B3%95" target="_blank" rel="noopener">📖 《消费者权益保护法》 <span class="tag">日常</span></a>
-            <a class="media-item" href="https://baike.baidu.com/item/%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%B8%AA%E4%BA%BA%E4%BF%A1%E6%81%AF%E4%BF%9D%E6%8A%A4%E6%B3%95" target="_blank" rel="noopener">📖 《个人信息保护法》 <span class="tag">隐私</span></a>
-          </ul>
+          <ul class="media-list" id="rec-law-study"></ul>
         </div>
         <div class="card">
           <h3 class="card-title">🔍 法律资源</h3>
@@ -903,6 +872,15 @@
       <!-- 📅 课表 -->
       <section class="tab-panel" id="panel-timetable">
         <div class="card">
+          <h3 class="card-title">⏰ 节次时间设置</h3>
+          <p class="smart-tip">💡 设置每节课的开始和结束时间,默认 5 节,可加可删</p>
+          <div id="tt-periods-list" class="tt-periods-list"></div>
+          <div class="study-input-wrap" style="margin-top:8px;">
+            <button id="tt-period-add" class="btn-ghost">➕ 添加一节</button>
+            <button id="tt-period-save" class="btn-primary">保存时间</button>
+          </div>
+        </div>
+        <div class="card">
           <h3 class="card-title">➕ 添加课程</h3>
           <div class="study-input-wrap">
             <input type="text" id="tt-name" placeholder="课程名,如:高等数学" />
@@ -921,13 +899,7 @@
               <option value="6">周六</option>
               <option value="0">周日</option>
             </select>
-            <select id="tt-period" style="flex:1;">
-              <option value="0">第1节 8:00</option>
-              <option value="1">第2节 10:00</option>
-              <option value="2">第3节 14:00</option>
-              <option value="3">第4节 16:00</option>
-              <option value="4">第5节 19:00</option>
-            </select>
+            <select id="tt-period" style="flex:1;"></select>
             <button id="tt-add" class="btn-primary">添加</button>
           </div>
         </div>
@@ -1022,49 +994,34 @@
         </div>
         <div class="card">
           <h3 class="card-title">🎬 穿搭技巧视频</h3>
-          <div class="resource-list">
-            <a class="resource-item" href="https://search.bilibili.com/all?keyword=穿搭技巧" target="_blank" rel="noopener">
-              <div class="resource-icon">📺</div>
-              <div>
-                <div class="resource-title">B站 · 穿搭技巧</div>
-                <div class="resource-desc">穿搭干货长视频教学</div>
-              </div>
-            </a>
-            <a class="resource-item" href="https://search.bilibili.com/all?keyword=通勤穿搭" target="_blank" rel="noopener">
-              <div class="resource-icon">📺</div>
-              <div>
-                <div class="resource-title">B站 · 通勤穿搭</div>
-                <div class="resource-desc">上班族的日常搭配</div>
-              </div>
-            </a>
-            <a class="resource-item" href="https://search.bilibili.com/all?keyword=小个子穿搭" target="_blank" rel="noopener">
-              <div class="resource-icon">📺</div>
-              <div>
-                <div class="resource-title">B站 · 小个子穿搭</div>
-                <div class="resource-desc">显高显腿长技巧</div>
-              </div>
-            </a>
-            <a class="resource-item" href="https://www.douyin.com/search/穿搭技巧?type=video" target="_blank" rel="noopener">
-              <div class="resource-icon">📱</div>
-              <div>
-                <div class="resource-title">抖音 · 穿搭技巧</div>
-                <div class="resource-desc">短视频穿搭灵感(手机跳转App)</div>
-              </div>
-            </a>
-            <a class="resource-item" href="https://www.douyin.com/search/微胖穿搭?type=video" target="_blank" rel="noopener">
-              <div class="resource-icon">📱</div>
-              <div>
-                <div class="resource-title">抖音 · 微胖穿搭</div>
-                <div class="resource-desc">显瘦穿搭方案</div>
-              </div>
-            </a>
+          <ul class="media-list" id="rec-outfit-tips"></ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title">👔 我的衣橱(按类别)</h3>
+          <p class="smart-tip">💡 选好类别后上传图片,自动按上传时间倒序排;注意 5MB 存储上限,建议单张 200KB 内</p>
+          <div class="study-input-wrap" style="margin-bottom:8px;">
+            <select id="wd-category" style="flex:1;">
+              <option value="衬衫">👚 衬衫</option>
+              <option value="T恤">👕 T恤</option>
+              <option value="裤装">👖 裤装</option>
+              <option value="外套">🧥 外套</option>
+              <option value="裙装">👗 裙装</option>
+              <option value="鞋">👟 鞋</option>
+              <option value="包">🎒 包</option>
+              <option value="其他">✨ 其他</option>
+            </select>
+            <input type="file" id="wd-file" accept="image/*" style="display:none;" />
+            <button id="wd-upload-btn" class="btn-primary">➕ 上传图片</button>
           </div>
+          <div class="wd-cat-tabs" id="wd-cat-tabs"></div>
+          <div id="wd-gallery" class="wd-gallery"></div>
         </div>
         <div class="card">
           <h3 class="card-title">🌸 我的特征档案</h3>
           <div id="profile-form"></div>
           <div style="display:flex;align-items:center;margin-top:10px;">
             <button id="profile-save" class="btn-primary small">保存特征</button>
+            <button id="profile-clear" class="btn-ghost small" style="margin-left:8px;">清空重填</button>
             <span id="profile-msg" style="margin-left:8px;font-size:12px;color:var(--accent);"></span>
           </div>
           <div id="profile-links" class="resource-list" style="margin-top:12px;"></div>
@@ -1134,6 +1091,14 @@
 
       <!-- 📝 每日计划 -->
       <section class="tab-panel" id="panel-planner">
+        <div class="card pl-reminder-card">
+          <h3 class="card-title">🔔 任务提醒</h3>
+          <div class="pl-reminder-row">
+            <span id="pl-reminder-status">未开启</span>
+            <button id="pl-reminder-toggle" class="btn-primary">开启提醒</button>
+          </div>
+          <p class="smart-tip">💡 给任务设置时间(下方),到点会自动弹通知 + 蜂鸣声。需保持页面打开。</p>
+        </div>
         <div class="card">
           <h3 class="card-title">➕ 安排一件事</h3>
           <div class="study-input-wrap">
@@ -1377,14 +1342,8 @@
       <section class="tab-panel" id="panel-podcast">
         <div class="card">
           <h3 class="card-title">🎧 我的订阅</h3>
-          <ul class="media-list">
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=%E5%BF%BD%E5%B7%A6%E5%BF%BD%E5%8F%B3" target="_blank" rel="noopener">🎧 忽左忽右 <span class="tag">人文</span></a>
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=%E5%95%86%E4%B8%9A%E5%B0%B1%E6%98%AF%E8%BF%99%E6%A0%B7" target="_blank" rel="noopener">🎧 商业就是这样 <span class="tag">商业</span></a>
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=%E5%A3%B0%E4%B8%9C%E5%87%BB%E8%A5%BF" target="_blank" rel="noopener">🎧 声东击西 <span class="tag">科技</span></a>
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=%E9%9A%8F%E6%9C%BA%E6%B3%A2%E5%8A%A8%20%E6%92%AD%E5%AE%A2" target="_blank" rel="noopener">🎧 随机波动 <span class="tag">社会</span></a>
-            <a class="media-item" href="https://search.bilibili.com/all?keyword=%E7%9F%A5%E8%A1%8C%E5%B0%8F%E9%85%92%E9%A6%86" target="_blank" rel="noopener">🎧 知行小酒馆 <span class="tag">生活</span></a>
-          </ul>
-          <p class="smart-tip">💡 点击节目直达 B站搜索,最新一期随时听</p>
+          <ul class="media-list" id="rec-podcast-subs"></ul>
+          <p class="smart-tip">💡 点击节目直达 B站搜索,最新一期随时听;每天换 4 档</p>
         </div>
         <div class="card">
           <h3 class="card-title">📱 收听平台</h3>
@@ -1584,6 +1543,54 @@
         </div>
       </section>
 
+      <!-- 📄 简历 -->
+      <section class="tab-panel" id="panel-resume">
+        <div class="card">
+          <h3 class="card-title">📄 我的简历</h3>
+          <p class="smart-tip">💡 记录教育、实习、奖项和证书照片,所有数据存本地</p>
+
+          <div class="resume-section">
+            <h4>🎓 教育经历</h4>
+            <div class="study-input-wrap">
+              <input type="text" id="rs-edu-school" placeholder="学校" style="flex:2;" />
+              <input type="text" id="rs-edu-major" placeholder="专业" style="flex:2;" />
+              <input type="text" id="rs-edu-time" placeholder="如 2023.09-2027.06" style="flex:2;" />
+              <button class="btn-primary" id="rs-edu-add">添加</button>
+            </div>
+            <div id="rs-edu-list"></div>
+          </div>
+
+          <div class="resume-section">
+            <h4>💼 实习/工作</h4>
+            <div class="study-input-wrap">
+              <input type="text" id="rs-work-company" placeholder="公司" style="flex:2;" />
+              <input type="text" id="rs-work-position" placeholder="职位" style="flex:2;" />
+              <input type="text" id="rs-work-time" placeholder="如 2024.07-2024.09" style="flex:2;" />
+              <button class="btn-primary" id="rs-work-add">添加</button>
+            </div>
+            <textarea id="rs-work-desc" placeholder="干了什么(可选)..." style="width:100%;min-height:50px;margin-top:6px;"></textarea>
+            <div id="rs-work-list"></div>
+          </div>
+
+          <div class="resume-section">
+            <h4>🏆 奖项/证书</h4>
+            <div class="study-input-wrap">
+              <input type="text" id="rs-award-name" placeholder="如 校级一等奖学金" style="flex:2;" />
+              <input type="text" id="rs-award-time" placeholder="如 2024.06" style="flex:1;" />
+              <button class="btn-primary" id="rs-award-add">添加</button>
+            </div>
+            <div id="rs-award-list"></div>
+          </div>
+
+          <div class="resume-section">
+            <h4>🖼️ 证书/作品照片</h4>
+            <input type="file" id="rs-photo-file" accept="image/*" multiple style="display:none;" />
+            <button class="btn-primary" id="rs-photo-btn">➕ 上传照片</button>
+            <div id="rs-photo-list" class="resume-photo-list" style="margin-top:8px;"></div>
+          </div>
+        </div>
+      </section>
+
       <!-- 🧘 专注 -->
       <section class="tab-panel" id="panel-focus">
         <div class="card focus-card">
@@ -1721,7 +1728,9 @@
             <label>目标日期:</label>
             <input type="datetime-local" id="set-cd-date" />
           </div>
-          <button id="save-countdown" class="btn-primary">保存设置</button>
+          <button id="save-countdown" class="btn-primary">添加倒数日</button>
+          <h4 class="cd-sub-title">已添加的倒数日</h4>
+          <ul id="cd-manage-list" class="cd-manage-list"></ul>
         </div>
         <div class="card">
           <h3 class="card-title">🎨 外观主题</h3>
@@ -1795,7 +1804,7 @@
   <!-- 脚本加载顺序(?v=6 用于破缓存) -->
   <script src="js/chart.umd.min.js?v=1"></script>
   <script src="js/marked.min.js?v=1"></script>
-  <script src="js/store.js?v=10"></script>
+  <script src="js/store.js?v=11"></script>
   <script src="js/meta.js?v=4"></script>
   <script src="js/goals.js?v=4"></script>
   <script src="js/knowledge.js?v=6"></script>
@@ -1803,14 +1812,14 @@
   <script src="js/sing.js?v=4"></script>
   <script src="js/study.js?v=4"></script>
   <script src="js/english.js?v=6"></script>
-  <script src="js/express.js?v=4"></script>
+  <script src="js/express.js?v=5"></script>
   <script src="js/law.js?v=4"></script>
   <script src="js/wellness.js?v=1"></script>
   <script src="js/books.js?v=2"></script>
   <script src="js/phone.js?v=2"></script>
-  <script src="js/timetable.js?v=1"></script>
-  <script src="js/planner.js?v=1"></script>
-  <script src="js/outfit.js?v=6"></script>
+  <script src="js/timetable.js?v=2"></script>
+  <script src="js/planner.js?v=2"></script>
+  <script src="js/outfit.js?v=8"></script>
   <script src="js/makeup.js?v=4"></script>
   <script src="js/finance.js?v=6"></script>
   <script src="js/news.js?v=4"></script>
@@ -1818,13 +1827,15 @@
   <script src="js/aistudy.js?v=4"></script>
   <script src="js/favorites.js?v=5"></script>
   <script src="js/edit.js?v=5"></script>
+  <script src="js/recommend.js?v=1"></script>
+  <script src="js/resume.js?v=1"></script>
   <script src="js/focus.js?v=5"></script>
   <script src="js/money.js?v=4"></script>
   <script src="js/noise.js?v=1"></script>
   <script src="js/qrcode.min.js?v=1"></script>
   <script src="js/ai.js?v=4"></script>
   <script src="js/settings.js?v=5"></script>
-  <script src="js/main.js?v=8"></script>
+  <script src="js/main.js?v=9"></script>
 
 </body>
 </html>
