@@ -1939,6 +1939,54 @@ a.media-item, a.resource-item, a.source-item, a.makeup-card, a.ai-topic, a.news-
 }
 .ev-del:active { background: rgba(239, 68, 68, .25); }
 
+/* ===== 只读浏览模式 ===== */
+body.readonly-mode .btn-primary,
+body.readonly-mode .btn-ghost,
+body.readonly-mode .btn-danger,
+body.readonly-mode .fav-delete,
+body.readonly-mode .todo-delete,
+body.readonly-mode .express-rec-del,
+body.readonly-mode .ev-del,
+body.readonly-mode .tt-period-del,
+body.readonly-mode .book-edit,
+body.readonly-mode .book-del,
+body.readonly-mode .book-note-btn,
+body.readonly-mode .cd-del,
+body.readonly-mode #edit-video-upload,
+body.readonly-mode .group-toggle,
+body.readonly-mode #tt-prev-week,
+body.readonly-mode #tt-next-week { display: none !important; }
+body.readonly-mode input,
+body.readonly-mode textarea,
+body.readonly-mode select { pointer-events: none; opacity: .75; background: var(--bg-hover); }
+body.readonly-mode .project-tag { pointer-events: none; }
+body.readonly-mode .focus-mode-btn { pointer-events: none; opacity: .6; }
+body.readonly-mode .noise-item { pointer-events: none; }
+body.readonly-mode .tt-chip { pointer-events: none; }
+
+/* ===== 访问密码遮罩 ===== */
+#auth-mask {
+  position: fixed; inset: 0; z-index: 999999;
+  background: rgba(0,0,0,.85); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-box {
+  background: var(--bg-primary); border: 1px solid var(--border);
+  border-radius: 16px; padding: 32px 28px; width: 90%; max-width: 340px;
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+.auth-icon { font-size: 48px; margin-bottom: 12px; }
+.auth-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: var(--text); }
+.auth-box input {
+  width: 100%; padding: 12px 14px; margin-bottom: 12px;
+  background: var(--bg-secondary); color: var(--text);
+  border: 1px solid var(--border); border-radius: 10px; font-size: 15px;
+  text-align: center;
+}
+.auth-box input:focus { outline: none; border-color: var(--accent); }
+.auth-err { color: #ef4444; font-size: 13px; min-height: 18px; margin-bottom: 8px; }
+.auth-box .btn-primary { width: 100%; padding: 12px; }
+
 /* ===== 简历 ===== */
 .resume-section { margin-bottom: 14px; }
 .resume-section h4 {
