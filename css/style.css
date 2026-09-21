@@ -1987,6 +1987,19 @@ body.readonly-mode .tt-chip { pointer-events: none; }
 .auth-err { color: #ef4444; font-size: 13px; min-height: 18px; margin-bottom: 8px; }
 .auth-box .btn-primary { width: 100%; padding: 12px; }
 
+/* ===== 通用弹窗 ===== */
+.modal-mask {
+  position: fixed; inset: 0; z-index: 99999;
+  background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-box {
+  background: var(--bg-primary); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px; width: 100%; max-width: 440px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+
 /* ===== 简历 ===== */
 .resume-section { margin-bottom: 14px; }
 .resume-section h4 {
