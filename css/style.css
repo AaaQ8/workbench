@@ -1919,6 +1919,26 @@ a.media-item, a.resource-item, a.source-item, a.makeup-card, a.ai-topic, a.news-
 }
 .book-note-textarea:focus { outline: none; border-color: var(--accent); }
 
+/* 剪辑视频库 */
+.edit-video-list { margin-top: 12px; display: flex; flex-direction: column; gap: 12px; }
+.edit-video-card {
+  background: var(--bg-hover); border-radius: 10px; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.edit-video-card video {
+  width: 100%; max-height: 360px; background: #000; display: block;
+}
+.ev-info { padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.ev-name { font-size: 14px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-meta { font-size: 12px; color: var(--text-secondary); }
+.ev-del {
+  align-self: flex-start; margin-top: 4px;
+  background: rgba(239, 68, 68, .12); color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, .25); border-radius: 6px;
+  padding: 4px 12px; font-size: 12px; cursor: pointer;
+}
+.ev-del:active { background: rgba(239, 68, 68, .25); }
+
 /* ===== 简历 ===== */
 .resume-section { margin-bottom: 14px; }
 .resume-section h4 {
