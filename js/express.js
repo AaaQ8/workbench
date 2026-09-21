@@ -77,10 +77,33 @@ function _erFmtDur(sec) {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function _erRenderList() {
+// 录音存 IndexedDB(突破 5MB 限制),兼容旧 localStorage 数据自动迁移
+const ER_KEY = Store.KEYS.EXPRESS_RECORDINGS;
+
+async function _erGetList() {
+  try {
+    let list = await Store.idb.get(ER_KEY);
+    if (Array.isArray(list)) return list;
+    // 旧数据迁移:localStorage 里的搬到 IndexedDB
+    const old = Store.get(ER_KEY, null);
+    if (Array.isArray(old)) {
+      await Store.idb.set(ER_KEY, old);
+      try { localStorage.removeItem(ER_KEY); } catch (e) {}
+      return old;
+    }
+  } catch (e) {}
+  return [];
+}
+
+async function _erSaveList(list) {
+  try { await Store.idb.set(ER_KEY, list); return true; }
+  catch (e) { showToast('保存失败: ' + (e.message || e)); return false; }
+}
+
+async function _erRenderList() {
   const ul = document.getElementById('express-rec-list');
   if (!ul) return;
-  const list = Store.get(Store.KEYS.EXPRESS_RECORDINGS, []);
+  const list = await _erGetList();
   ul.innerHTML = '';
   if (!list.length) {
     ul.innerHTML = '<li class="note-item" style="opacity:.5;">还没有录音,按下「开始录音」录一段吧 🎙️</li>';
@@ -90,9 +113,11 @@ function _erRenderList() {
     const li = document.createElement('li');
     li.className = 'express-rec-item';
     li.innerHTML = `
-      <span>${escapeHtml(r.name || '未命名')} · ${_erFmtDur(r.dur || 0)}</span>
+      <div class="express-rec-head">
+        <span class="express-rec-name">${escapeHtml(r.name || '未命名')} · ${_erFmtDur(r.dur || 0)}</span>
+        <button class="express-rec-del" data-id="${r.id}" title="删除">删除</button>
+      </div>
       <audio controls src="${r.data}"></audio>
-      <button class="express-rec-del" data-id="${r.id}">✕</button>
     `;
     ul.appendChild(li);
   });
@@ -159,12 +184,12 @@ function initExpressRec() {
   });
 
   if (saveBtn) {
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
       if (!_erCurBlob) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
         const data = reader.result;
-        const list = Store.get(Store.KEYS.EXPRESS_RECORDINGS, []);
+        const list = await _erGetList();
         list.unshift({
           id: typeof uid === 'function' ? uid() : 'er_' + Date.now(),
           name: (nameInput ? nameInput.value.trim() : '') || `录音 ${new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' })}`,
@@ -172,7 +197,7 @@ function initExpressRec() {
           dur: (Date.now() - _erStartTs) / 1000,
           ts: Date.now()
         });
-        if (!Store.set(Store.KEYS.EXPRESS_RECORDINGS, list)) return;
+        if (!await _erSaveList(list)) return;
         if (nameInput) nameInput.value = '';
         if (preview) { preview.src = ''; preview.style.display = 'none'; }
         saveBtn.disabled = true;
@@ -187,14 +212,18 @@ function initExpressRec() {
 
   const ul = $('#express-rec-list');
   if (ul) {
-    ul.addEventListener('click', e => {
+    ul.addEventListener('click', async e => {
       const btn = e.target.closest('.express-rec-del');
       if (!btn) return;
-      if (!confirm('删除这段录音?')) return;
+      // 不依赖 confirm(部分移动 webview 拦截),直接删除+撤销提示
       const id = btn.dataset.id;
-      const list = Store.get(Store.KEYS.EXPRESS_RECORDINGS, []).filter(x => x.id !== id);
-      Store.set(Store.KEYS.EXPRESS_RECORDINGS, list);
+      const all = await _erGetList();
+      const target = all.find(x => x.id === id);
+      if (!target) return;
+      const next = all.filter(x => x.id !== id);
+      await _erSaveList(next);
       _erRenderList();
+      showToast(`已删除「${target.name || '录音'}」`);
     });
   }
 
