@@ -575,6 +575,7 @@ function initApp() {
   safeInit('noise',     typeof window.initNoise     !== 'undefined' ? window.initNoise     : null);
   safeInit('money',     typeof window.initMoney     !== 'undefined' ? window.initMoney     : null);
   safeInit('income',    typeof window.initIncomeChannels !== 'undefined' ? window.initIncomeChannels : null);
+  safeInit('shopEval',  typeof window.initShopEval   !== 'undefined' ? window.initShopEval   : null);
   safeInit('ai',        typeof window.initAI       !== 'undefined' ? window.initAI       : null);
   safeInit('settings',  typeof window.initSettings  !== 'undefined' ? window.initSettings  : null);
 
