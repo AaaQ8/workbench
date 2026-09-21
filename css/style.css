@@ -1043,6 +1043,18 @@ select {
   color: var(--accent);
 }
 
+.speak-btn {
+  display: inline-block;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--bg-hover);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.speak-btn:active { background: var(--accent); color: #fff; }
+.speak-btn.small { font-size: 13px; }
+
 .word-cn {
   font-size: 13px;
   color: var(--text-secondary);
