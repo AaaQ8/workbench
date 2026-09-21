@@ -1525,6 +1525,52 @@ a.media-item, a.resource-item, a.source-item, a.makeup-card, a.ai-topic, a.news-
 .income-item:hover .inc-del { opacity: 1; }
 .inc-del:active { color: var(--danger); }
 
+/* 开店盈利评估 */
+.shop-form { margin-top: 12px; }
+.shop-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.shop-row label { font-size: 13px; color: var(--text-secondary); }
+.shop-row input, .shop-row select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.shop-result {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+}
+.shop-conclusion {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.shop-stat {
+  background: var(--bg-primary);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+.ss-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.ss-val { font-size: 15px; font-weight: 600; }
+.shop-advice p { margin: 6px 0; font-size: 13px; line-height: 1.6; }
+
 .money-goal {
   background: var(--bg-secondary);
   padding: 16px;
