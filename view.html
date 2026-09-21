@@ -8,7 +8,7 @@
     .readonly-banner{position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(90deg,#ff6b35,#f7b731);color:#fff;text-align:center;padding:6px;font-size:13px;font-weight:bold;}
     body.readonly-mode{padding-top:30px;}
   </style>
-  <link rel="stylesheet" href="css/style.css?v=14" />
+  <link rel="stylesheet" href="css/style.css?v=15" />
   <!-- PWA:手机「添加到主屏幕」后可全屏像 App 一样使用 -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d0d0f" />
@@ -734,23 +734,24 @@
         <div class="card">
           <h3 class="card-title">📅 今日单词</h3>
           <div id="word-list" class="word-list"></div>
-          <p class="smart-tip">💡 每天自动轮换 3 个四级高频词,点击单词卡可听发音</p>
+          <p class="smart-tip">💡 每天自动轮换 3 个四级高频词,点 🔊 听单词和例句发音</p>
+          <button onclick="openBudouApp()" class="btn-primary" style="margin-top:8px;">📖 打开「不背单词」App</button>
         </div>
         <div class="card">
           <h3 class="card-title">🎧 听力练习</h3>
           <div class="resource-list">
-            <a class="resource-item" href="https://www.bbc.co.uk/learningenglish/english/features/6-minute-english" target="_blank" rel="noopener noreferrer">
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=BBC%206%20minute%20english%20%E5%8F%8C%E8%AF%AD" target="_blank" rel="noopener noreferrer">
               <div class="resource-icon">🎧</div>
               <div>
                 <div class="resource-title">BBC 6 Minute English</div>
-                <div class="resource-desc">每天 6 分钟地道英语</div>
+                <div class="resource-desc">每天 6 分钟地道英语(B站双语版,打开快)</div>
               </div>
             </a>
-            <a class="resource-item" href="https://www.ted.com/podcasts/ted-talks-daily" target="_blank" rel="noopener noreferrer">
-              <div class="resource-icon">🎧</div>
+            <a class="resource-item" href="https://search.bilibili.com/all?keyword=TED%20%E6%BC%94%E8%AE%B2%20%E5%8F%8C%E8%AF%AD%E5%AD%97%E5%B9%95" target="_blank" rel="noopener noreferrer">
+              <div class="resource-icon">🎤</div>
               <div>
-                <div class="resource-title">TED Talks Daily</div>
-                <div class="resource-desc">演讲+字幕,练听力+思路</div>
+                <div class="resource-title">TED 演讲(双语)</div>
+                <div class="resource-desc">演讲+字幕,练听力+思路(B站,打开快)</div>
               </div>
             </a>
             <a class="resource-item" href="https://search.bilibili.com/all?keyword=%E8%80%81%E5%8F%8B%E8%AE%B0%20%E8%8B%B1%E6%96%87" target="_blank" rel="noopener noreferrer">
@@ -1913,7 +1914,7 @@
   <script src="js/dance.js?v=5"></script>
   <script src="js/sing.js?v=6"></script>
   <script src="js/study.js?v=4"></script>
-  <script src="js/english.js?v=6"></script>
+  <script src="js/english.js?v=7"></script>
   <script src="js/express.js?v=6"></script>
   <script src="js/law.js?v=4"></script>
   <script src="js/wellness.js?v=1"></script>
