@@ -1903,6 +1903,22 @@ a.media-item, a.resource-item, a.source-item, a.makeup-card, a.ai-topic, a.news-
 }
 .fav-del:active { background: rgba(239, 68, 68, .15); color: #ef4444; }
 
+/* 书单读书心得 */
+.book-item { flex-wrap: wrap; }
+.book-note-preview {
+  flex-basis: 100%; font-size: 12px; color: var(--text-secondary);
+  margin-top: 6px; padding: 6px 10px; background: var(--bg-hover); border-radius: 6px;
+  line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+}
+.book-note-box { flex-basis: 100%; margin-top: 8px; }
+.book-note-textarea {
+  width: 100%; min-height: 80px; padding: 8px 10px;
+  background: var(--bg-secondary); color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; font-size: 13px; line-height: 1.6; resize: vertical;
+  font-family: inherit;
+}
+.book-note-textarea:focus { outline: none; border-color: var(--accent); }
+
 /* ===== 简历 ===== */
 .resume-section { margin-bottom: 14px; }
 .resume-section h4 {
