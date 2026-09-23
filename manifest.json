@@ -3,7 +3,7 @@
   "short_name": "工作台",
   "description": "个人目标与生活管理工作台",
   "lang": "zh-CN",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
