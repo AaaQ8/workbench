@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>工作台管理后台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;padding:20px;min-height:100vh}
+.login-gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0f172a;z-index:999}
+.login-card{background:#1e293b;padding:30px;border-radius:16px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-card h1{font-size:20px;margin-bottom:20px;text-align:center}
+.login-card input{width:100%;border:1px solid #334155;background:#0f172a;color:#e2e8f0;border-radius:8px;padding:11px 14px;font-size:14px;margin-bottom:12px;outline:none}
+.login-card input:focus{border-color:#f97316}
+.login-card button{width:100%;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;background:#f97316;color:#fff}
+.login-card button:hover{filter:brightness(1.1)}
+.login-err{color:#ef4444;font-size:12px;min-height:18px;text-align:center}
+.dashboard{max-width:1200px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.header h1{font-size:22px}
+.header .right{font-size:13px;color:#64748b}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:#1e293b;border-radius:12px;padding:20px}
+.stat-card .num{font-size:32px;font-weight:800;color:#f97316}
+.stat-card .label{font-size:13px;color:#94a3b8;margin-top:4px}
+.section{background:#1e293b;border-radius:12px;padding:20px;margin-bottom:20px}
+.section h2{font-size:16px;margin-bottom:16px;color:#f1f5f9}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:#94a3b8;font-weight:600;border-bottom:1px solid #334155}
+td{padding:8px 12px;border-bottom:1px solid #1e293b}
+tr:hover{background:#334155}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.badge.online{background:#10b98133;color:#34d399}
+.badge.offline{background:#64748b33;color:#94a3b8}
+.muted{color:#64748b}
+.pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+
+<!-- 登录门 -->
+<div class="login-gate" id="gate">
+  <div class="login-card">
+    <h1>🔐 工作台管理后台</h1>
+    <input type="password" id="admin-token" placeholder="粘贴管理员 GitHub Token（gist 权限）">
+    <div class="login-err" id="gate-err"></div>
+    <button id="gate-btn">进入后台</button>
+    <p style="font-size:12px;color:#64748b;margin-top:12px;text-align:center">Token 只存本设备，用于读取 Gist 日志数据</p>
+  </div>
+</div>
+
+<!-- 仪表盘 -->
+<div class="dashboard" id="dash" style="display:none">
+  <div class="header">
+    <h1>🛡️ 工作台管理后台</h1>
+    <div class="right">最后刷新：<span id="last-refresh">—</span> <button id="btn-refresh" style="margin-left:8px;border:none;background:#334155;color:#e2e8f0;border-radius:6px;padding:4px 12px;cursor:pointer">🔄 刷新</button></div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="num" id="stat-accounts">0</div><div class="label">注册账号总数</div></div>
+    <div class="stat-card"><div class="num" id="stat-visits">0</div><div class="label">总浏览次数</div></div>
+    <div class="stat-card"><div class="num" id="stat-online">0</div><div class="label">当前在线人数</div></div>
+    <div class="stat-card"><div class="num" id="stat-today">0</div><div class="label">今日访问次数</div></div>
+  </div>
+
+  <div class="section">
+    <h2>👤 账号列表</h2>
+    <table>
+      <thead><tr><th>用户名</th><th>注册时间</th><th>最后活跃</th><th>数据量</th><th>状态</th></tr></thead>
+      <tbody id="tb-accounts"></tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>📊 最近浏览记录</h2>
+    <table>
+      <thead><tr><th>时间</th><th>账号</th><th>设备</th><th>页面</th></tr></thead>
+      <tbody id="tb-visits"></tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>📦 数据概览</h2>
+    <table>
+      <thead><tr><th>账号</th><th>模块数据项数</th><th>估算大小</th><th>最后同步</th></tr></thead>
+      <tbody id="tb-data"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const GIST_ID_KEY = 'admin_gist_id';
+const GIST_TOKEN_KEY = 'admin_gist_token';
+const FILE_LOGS = 'wb-logs.json';
+const FILE_ACCOUNTS = 'wb-accounts.json';
+
+let token = '', gistId = '';
+
+// 读取 Gist 里的指定文件
+async function readGistFile(fileName) {
+  const r = await fetch(`https://api.github.com/gists/${gistId}`, {
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (!r.ok) return null;
+  const g = await r.json();
+  const f = g.files[fileName];
+  if (!f || !f.content) return null;
+  try { return JSON.parse(f.content); } catch (e) { return null; }
+}
+
+// 更新 Gist 里的文件
+async function writeGistFile(fileName, content) {
+  const r = await fetch(`https://api.github.com/gists/${gistId}`, {
+    method: 'PATCH',
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
+    body: JSON.stringify({ files: { [fileName]: { content: JSON.stringify(content, null, 2) } } })
+  });
+  return r.ok;
+}
+
+// 初始化：用 Token 查找或创建管理 Gist
+async function init() {
+  token = localStorage.getItem(GIST_TOKEN_KEY) || '';
+  gistId = localStorage.getItem(GIST_ID_KEY) || '';
+  if (!token) return;
+
+  // 验证 Token
+  const r = await fetch('https://api.github.com/user', {
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (r.status === 401) { showErr('Token 无效'); return; }
+  if (!r.ok) { showErr('验证失败'); return; }
+
+  // 如果没有 gistId，查找已有的管理 Gist
+  if (!gistId) {
+    const lr = await fetch('https://api.github.com/gists?per_page=100', {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+    });
+    if (lr.ok) {
+      const gists = await lr.json();
+      const found = gists.find(g => g.files && g.files[FILE_LOGS]);
+      if (found) {
+        gistId = found.id;
+        localStorage.setItem(GIST_ID_KEY, gistId);
+      }
+    }
+  }
+
+  if (gistId) {
+    showGate(false);
+    await refresh();
+  } else {
+    showErr('未找到管理数据 Gist。请先在工作台中打开页面以自动创建。');
+  }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('gate-err');
+  if (el) el.textContent = msg;
+}
+
+function showGate(show) {
+  document.getElementById('gate').style.display = show ? 'flex' : 'none';
+  document.getElementById('dash').style.display = show ? 'none' : 'block';
+}
+
+// 刷新仪表盘
+async function refresh() {
+  document.getElementById('last-refresh').textContent = new Date().toLocaleString('zh-CN');
+  showGate(false);
+
+  try {
+    const [logs, accounts] = await Promise.all([readGistFile(FILE_LOGS), readGistFile(FILE_ACCOUNTS)]);
+    if (!logs && !accounts) { showGate(true); showErr('无法读取数据，请检查网络'); return; }
+
+    const allAccounts = accounts || [];
+    const allVisits = (logs && logs.visits) || [];
+
+    // 统计
+    document.getElementById('stat-accounts').textContent = allAccounts.length;
+    document.getElementById('stat-visits').textContent = allVisits.length;
+
+    // 今日访问
+    const today = new Date().toLocaleDateString('sv');
+    const todayCount = allVisits.filter(v => (v.time || '').startsWith(today)).length;
+    document.getElementById('stat-today').textContent = todayCount;
+
+    // 在线人数：5 分钟内有访问记录的
+    const now = Date.now();
+    const online = allVisits.filter(v => now - (v.ts || 0) < 5 * 60 * 1000);
+    const onlineUsers = new Set(online.map(v => v.user || v.device)).size;
+    document.getElementById('stat-online').textContent = onlineUsers;
+
+    // 账号列表
+    document.getElementById('tb-accounts').innerHTML = allAccounts.length
+      ? allAccounts.map(a => {
+          const lastActive = allVisits.filter(v => v.user === a.name).sort((x, y) => (y.ts || 0) - (x.ts || 0))[0];
+          const isActive = lastActive && now - (lastActive.ts || 0) < 5 * 60 * 1000;
+          const dataKeys = a.dataKeys || 0;
+          const dataSize = a.dataSize || '—';
+          return `<tr>
+            <td><b>${esc(a.name)}</b></td>
+            <td class="muted">${esc(a.createdAt || '—')}</td>
+            <td class="muted">${lastActive ? esc(lastActive.time) : '—'}</td>
+            <td>${dataKeys} 项 / ${dataSize}</td>
+            <td><span class="badge ${isActive ? 'online' : 'offline'}">${isActive ? '<span class="pulse"></span> 在线' : '离线'}</span></td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="5" class="muted" style="text-align:center;padding:20px">暂无注册账号</td></tr>';
+
+    // 最近浏览记录
+    const recent = allVisits.sort((a, b) => (b.ts || 0) - (a.ts || 0)).slice(0, 50);
+    document.getElementById('tb-visits').innerHTML = recent.length
+      ? recent.map(v => `<tr>
+          <td class="muted">${esc(v.time || '—')}</td>
+          <td>${esc(v.user || '游客')}</td>
+          <td>${esc(v.device || '—')}</td>
+          <td>${esc(v.page || 'workbench')}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" class="muted" style="text-align:center;padding:20px">暂无浏览记录</td></tr>';
+
+    // 数据概览
+    document.getElementById('tb-data').innerHTML = allAccounts.length
+      ? allAccounts.map(a => `<tr>
+          <td><b>${esc(a.name)}</b></td>
+          <td>${a.dataKeys || 0} 项</td>
+          <td class="muted">${a.dataSize || '—'}</td>
+          <td class="muted">${esc(a.lastSync || '—')}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" class="muted" style="text-align:center;padding:20px">暂无数据</td></tr>';
+
+  } catch (e) {
+    showGate(true);
+    showErr('读取数据失败：' + e.message);
+  }
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML; }
+
+// 登录门事件
+document.getElementById('gate-btn').onclick = async () => {
+  const t = document.getElementById('admin-token').value.trim();
+  if (!t) { showErr('请粘贴 Token'); return; }
+  document.getElementById('gate-btn').textContent = '验证中...';
+  localStorage.setItem(GIST_TOKEN_KEY, t);
+  token = t; gistId = '';
+  localStorage.removeItem(GIST_ID_KEY);
+  await init();
+  document.getElementById('gate-btn').textContent = '进入后台';
+  if (document.getElementById('dash').style.display === 'block') {
+    // 成功
+  }
+};
+
+document.getElementById('btn-refresh').onclick = refresh;
+
+// 自动初始化
+init();
+</script>
+</body>
+</html>
