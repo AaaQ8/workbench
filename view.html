@@ -332,7 +332,7 @@ const DB = {
   set(key, val) {
     try {
       localStorage.setItem(this.pref() + key, JSON.stringify(val));
-      gSet('pw_local_change', Date.now());
+      localStorage.setItem(this.pref() + 'local_change', JSON.stringify(Date.now()));
       if (typeof CloudSync !== 'undefined') CloudSync.schedulePush();
       return true;
     } catch (e) { Toast.show('保存失败：浏览器存储空间可能已满（照片建议压缩），请导出备份后清理', 'error'); return false; }
@@ -739,10 +739,14 @@ const SettingsUI = {
             if (!inp || !inp.value.trim()) { Toast.show('先粘贴 Token', 'warn'); return; }
             const btn = e.target.closest('#cs-connect');
             btn.textContent = '连接中...'; btn.disabled = true;
-            const err = await CloudSync.setup(inp.value);
+            const res = await CloudSync.setup(inp.value);
             btn.textContent = '🔗 连接'; btn.disabled = false;
-            if (err) Toast.show(err, 'error');
-            else { Toast.show('✅ 云同步已连接！'); SettingsUI.renderCloudSync(); }
+            if (typeof res === 'string') { Toast.show(res, 'error'); }
+            else {
+              Toast.show(res.pulled ? '✅ 已连接云端，正在加载其他设备的数据...' : '✅ 云同步已连接！');
+              SettingsUI.renderCloudSync();
+              if (res.pulled) setTimeout(() => location.reload(), 1500);
+            }
           } else if (e.target.closest('#cs-sync-now')) {
             const btn = e.target.closest('#cs-sync-now');
             btn.textContent = '同步中...'; btn.disabled = true;
@@ -910,9 +914,9 @@ const CloudSync = {
   gistId() { return gGet('pw_gist_id', ''); },
   enabled() { return !!this.token() && !!this.gistId(); },
   lastSync() { return gGet('pw_gist_last', 0); },
-  localMs() { return gGet('pw_local_change', 0); },
+  localMs() { const p = DB.pref(); const r = localStorage.getItem(p + 'local_change'); return r ? JSON.parse(r) : 0; },
   gistUrl() { return this.gistId() ? `https://gist.github.com/${this.gistId().slice(0, 20)}` : ''; },
-  // 验证 token 并创建 Gist
+  // 验证 token 并创建/复用 Gist
   async setup(token) {
     token = (token || '').trim();
     if (!token) return '请粘贴 GitHub Token';
@@ -923,23 +927,61 @@ const CloudSync = {
     if (!r.ok) return '验证失败（HTTP ' + r.status + '）';
     const scopes = r.headers.get('x-oauth-scopes') || '';
     if (!scopes.includes('gist')) return 'Token 缺少 gist 权限，请重新生成（勾选 gist）';
-    const payload = {
-      description: '个人工作台数据同步（自动生成，请勿手动删除）',
-      public: false,
-      files: { [this.FILE]: { content: JSON.stringify({ version: 1, data: DB.dump(), updatedAt: new Date().toISOString(), account: Account.current?.name || 'guest', localMs: Date.now() }, null, 2) } }
-    };
-    const gr = await fetch('https://api.github.com/gists', {
-      method: 'POST',
-      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' },
-      body: JSON.stringify(payload)
+
+    // 先搜索是否已有工作台数据 Gist（其他设备创建的），有则复用
+    let gistId = '', foundExisting = false;
+    const lr = await fetch('https://api.github.com/gists?per_page=100', {
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
     });
-    if (!gr.ok) return '创建 Gist 失败（HTTP ' + gr.status + '）';
-    const g = await gr.json();
+    if (lr.ok) {
+      const gists = await lr.json();
+      // 如果有多个，选最近更新的那个
+      const matches = gists.filter(g => g.files && g.files[this.FILE]);
+      if (matches.length) {
+        matches.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+        gistId = matches[0].id;
+        foundExisting = true;
+      }
+    }
+
+    // 如果已有 Gist，先拉取云端数据恢复到本地（确保新设备拿到老设备的数据）
+    if (gistId) {
+      const pr = await fetch(`https://api.github.com/gists/${gistId}`, {
+        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (pr.ok) {
+        const g = await pr.json();
+        const f = g.files[this.FILE];
+        if (f && f.content) {
+          try {
+            const cloud = JSON.parse(f.content);
+            if (cloud.data) DB.restore(cloud.data);
+            localStorage.setItem(DB.pref() + 'local_change', JSON.stringify(cloud.localMs || Date.now()));
+          } catch (e) {}
+        }
+      }
+    } else {
+      // 没有就新建
+      const payload = {
+        description: '个人工作台数据同步（自动生成，请勿手动删除）',
+        public: false,
+        files: { [this.FILE]: { content: JSON.stringify({ version: 1, data: DB.dump(), updatedAt: new Date().toISOString(), account: Account.current?.name || 'guest', localMs: Date.now() }, null, 2) } }
+      };
+      const gr = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' },
+        body: JSON.stringify(payload)
+      });
+      if (!gr.ok) return '创建 Gist 失败（HTTP ' + gr.status + '）';
+      const g = await gr.json();
+      gistId = g.id;
+    }
+
     gSet('pw_gist_token', token);
-    gSet('pw_gist_id', g.id);
+    gSet('pw_gist_id', gistId);
     gSet('pw_gist_last', Date.now());
-    gSet('pw_local_change', Date.now());
-    return null;
+    if (!this.localMs()) localStorage.setItem(DB.pref() + 'local_change', JSON.stringify(Date.now()));
+    return { err: null, pulled: !!foundExisting };
   },
   // 拉取云端数据
   async pull() {
@@ -967,7 +1009,7 @@ const CloudSync = {
       });
       if (!r.ok) return false;
       gSet('pw_gist_last', Date.now());
-      gSet('pw_local_change', Date.now());
+      localStorage.setItem(DB.pref() + 'local_change', JSON.stringify(Date.now()));
       return true;
     } catch (e) { return false; }
   },
@@ -980,7 +1022,7 @@ const CloudSync = {
     const localMs = this.localMs();
     if (cloudMs > localMs + 2000) { // 云端更新（2 秒容差）
       DB.restore(cloud.data);
-      gSet('pw_local_change', cloudMs);
+      localStorage.setItem(DB.pref() + 'local_change', JSON.stringify(cloudMs));
       gSet('pw_gist_last', Date.now());
       return { status: 'pulled', msg: '已从云端拉取最新数据' };
     } else if (localMs > cloudMs + 2000) { // 本地更新
@@ -1004,7 +1046,7 @@ const CloudSync = {
     localStorage.removeItem('pw_gist_token');
     localStorage.removeItem('pw_gist_id');
     localStorage.removeItem('pw_gist_last');
-    localStorage.removeItem('pw_local_change');
+    localStorage.removeItem(DB.pref() + 'local_change');
   }
 };
 
