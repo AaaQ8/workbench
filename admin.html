@@ -280,6 +280,11 @@ document.getElementById('btn-refresh').onclick = refresh;
 
 // 自动初始化
 init();
+
+// 注册 Service Worker（PWA 安装必需）
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
