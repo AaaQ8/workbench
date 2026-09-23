@@ -834,9 +834,10 @@ const SettingsUI = {
         <div class="small muted mb-2">最后同步：${t}</div>
         <div class="flex gap-2 flex-wrap">
           <button class="btn btn-pri" id="cs-sync-now">🔄 立即同步</button>
+          <a class="btn" href="https://gist.github.com/${CloudSync.gistId()}" target="_blank" rel="noopener noreferrer">📋 查看后台</a>
           <button class="btn btn-danger" id="cs-disconnect">断开</button>
         </div>
-        <p class="small muted mt-2">在另一台设备打开工作台 → 设置 → 云同步 → 粘贴同一个 Token 即可连接同一个 Gist，数据自动互通。</p>`;
+        <p class="small muted mt-2">点"查看后台"可在 GitHub 直接查看/编辑云端存储的全部数据。在另一台设备打开工作台 → 设置 → 云同步 → 粘贴同一个 Token 即可连接同一个 Gist。</p>`;
     }
     return `<div class="small muted mb-2">用 GitHub Gist 做免费云盘：数据变动自动上传，打开应用自动拉取。手机电脑用同一个 Token 即可互通。</div>
       <div class="small mb-1">① 打开 <a href="https://github.com/settings/tokens/new?scopes=gist" target="_blank" rel="noopener noreferrer">GitHub Token 生成页</a>，勾选 <code>gist</code> 权限，生成后复制</div>
