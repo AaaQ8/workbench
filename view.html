@@ -1008,6 +1008,132 @@ const CloudSync = {
   }
 };
 
+/* ============ 7.6 管理后台埋点：自动上报浏览记录/账号信息到管理 Gist ============ */
+const AdminLog = {
+  _reported: false,
+  // 用当前用户的云同步 Token 上报到管理 Gist
+  // 管理 Gist 的 ID 约定：首次上报时自动创建，文件名 wb-logs.json / wb-accounts.json
+  _adminGistId: null,
+
+  async _getOrCreateGist() {
+    // 复用用户自己的 token（如果有云同步配置）
+    const token = CloudSync.token();
+    if (!token) return null;
+
+    // 尝试读取已保存的管理 Gist ID
+    let id = gGet('pw_admin_gist', '');
+    if (id) {
+      // 验证是否可访问
+      const r = await fetch(`https://api.github.com/gists/${id}`, {
+        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+      });
+      if (r.ok) { this._adminGistId = id; return id; }
+    }
+
+    // 查找已有管理 Gist（文件名 wb-logs.json）
+    const lr = await fetch('https://api.github.com/gists?per_page=100', {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+    });
+    if (lr.ok) {
+      const gists = await lr.json();
+      const found = gists.find(g => g.files && g.files['wb-logs.json']);
+      if (found) {
+        gSet('pw_admin_gist', found.id);
+        this._adminGistId = found.id;
+        return found.id;
+      }
+    }
+
+    // 创建新的管理 Gist
+    const r = await fetch('https://api.github.com/gists', {
+      method: 'POST',
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
+      body: JSON.stringify({
+        description: '工作台管理后台日志（自动生成）',
+        public: false,
+        files: {
+          'wb-logs.json': { content: JSON.stringify({ visits: [] }, null, 2) },
+          'wb-accounts.json': { content: JSON.stringify([], null, 2) }
+        }
+      })
+    });
+    if (!r.ok) return null;
+    const g = await r.json();
+    gSet('pw_admin_gist', g.id);
+    this._adminGistId = g.id;
+    return g.id;
+  },
+
+  async _readFile(id, name) {
+    const r = await fetch(`https://api.github.com/gists/${id}`, {
+      headers: { Authorization: `token ${CloudSync.token()}`, Accept: 'application/vnd.github.v3+json' }
+    });
+    if (!r.ok) return null;
+    const g = await r.json();
+    const f = g.files[name];
+    return (f && f.content) ? JSON.parse(f.content) : null;
+  },
+
+  async _writeFile(id, name, data) {
+    const r = await fetch(`https://api.github.com/gists/${id}`, {
+      method: 'PATCH',
+      headers: { Authorization: `token ${CloudSync.token()}`, Accept: 'application/vnd.github.v3+json' },
+      body: JSON.stringify({ files: { [name]: { content: JSON.stringify(data, null, 2) } } })
+    });
+    return r.ok;
+  },
+
+  // 上报一次访问
+  async report() {
+    if (this._reported) return;
+    this._reported = true;
+    try {
+      const id = await this._getOrCreateGist();
+      if (!id) return;
+      const token = CloudSync.token();
+      if (!token) return;
+
+      // 读取现有数据
+      const [logs, accounts] = await Promise.all([
+        this._readFile(id, 'wb-logs.json'),
+        this._readFile(id, 'wb-accounts.json')
+      ]);
+
+      // 检测设备类型
+      const ua = navigator.userAgent;
+      const device = /Mobile|Android|iPhone|iPad/.test(ua) ? '📱手机' : '💻电脑';
+      const now = new Date();
+      const timeStr = now.toLocaleString('sv');
+      const userName = Account.current?.name || '游客';
+      const userId = Account.current?.id || 'guest';
+
+      // 追加访问记录（保留最近 500 条）
+      const visits = (logs && logs.visits) || [];
+      visits.push({ time: timeStr, ts: now.getTime(), user: userName, uid: userId, device, page: 'workbench' });
+      if (visits.length > 500) visits.splice(0, visits.length - 500);
+      await this._writeFile(id, 'wb-logs.json', { visits });
+
+      // 更新账号列表
+      const accs = accounts || [];
+      const idx = accs.findIndex(a => a.id === userId);
+      // 统计当前账号数据量
+      const dump = DB.dump();
+      const dataKeys = Object.keys(dump).length;
+      const dataSize = Math.round(JSON.stringify(dump).length / 1024) + 'KB';
+      const accInfo = {
+        id: userId, name: userName,
+        createdAt: idx >= 0 ? accs[idx].createdAt : timeStr,
+        lastActive: timeStr, lastTs: now.getTime(),
+        dataKeys, dataSize,
+        lastSync: CloudSync.enabled() ? new Date(CloudSync.lastSync()).toLocaleString('sv') : '未开启'
+      };
+      if (idx >= 0) accs[idx] = { ...accs[idx], ...accInfo };
+      else accs.push(accInfo);
+      await this._writeFile(id, 'wb-accounts.json', accs);
+    } catch (e) { /* 静默失败，不影响用户使用 */ }
+  }
+};
+
 /* ============ 8. 新手引导 ============ */
 const Guide = {
   steps: [
@@ -7491,6 +7617,8 @@ function startApp() {
         setTimeout(() => location.reload(), 1500);
       }
     }), 2000);
+    // 管理后台埋点：延迟 3 秒上报（等云同步拉取完成后再上报）
+    setTimeout(() => AdminLog.report(), 3000);
   }
 }
 // 入口：只读模式(?view=1 或 view.html)直接进；否则账号判断 + 访问密码门
