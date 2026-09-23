@@ -7638,6 +7638,26 @@ function boot() {
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else boot();
 
+// Service Worker 注册：离线缓存 + 检测到新版自动刷新
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const newSw = reg.installing;
+      newSw.addEventListener('statechange', () => {
+        if (newSw.state === 'installed' && navigator.serviceWorker.controller) {
+          // 有新版可用，自动刷新页面加载最新版
+          setTimeout(() => location.reload(), 1500);
+        }
+      });
+    });
+    // 新 SW 激活后立即刷新一次（确保拿到最新 HTML）
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) { refreshing = true; location.reload(); }
+    });
+  }).catch(() => {});
+}
+
 </script>
 </body>
 </html>
