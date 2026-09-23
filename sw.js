@@ -1,7 +1,7 @@
 /* Service Worker:让工作台像 App 一样
    1) 离线缓存核心资源
    2) 接收页面消息触发系统通知(页面后台时也能弹) */
-const CACHE = 'pw-cache-v1';
+const CACHE = 'pw-cache-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -29,10 +29,24 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// 缓存优先,网络回退
+// HTML 导航请求：网络优先（确保拿到最新版），离线回退缓存
+// 静态资源：缓存优先
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
+  const isNav = req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html');
+  if (isNav) {
+    e.respondWith(
+      fetch(req).then(res => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(req, clone));
+        }
+        return res;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
   e.respondWith(
     caches.match(req).then(cached => {
       const net = fetch(req).then(res => {
