@@ -634,16 +634,6 @@ const Sheet = {
 const SettingsUI = {
   open() {
     const s = Settings.data;
-    const modRows = MODULES.filter(m => !m.fixed).map(m => {
-      const hidden = s.hidden.includes(m.id);
-      return `<div class="flex items-center gap-2 py-1.5" data-mod="${m.id}">
-        <span class="w-6 text-center">${m.icon}</span>
-        <span class="flex-1 text-sm">${esc(m.name)} <span class="small muted">${esc(TABS.find(t => t.id === m.tab)?.name || '')}</span></span>
-        <button class="btn btn-sm" data-up title="上移">↑</button>
-        <button class="btn btn-sm" data-down title="下移">↓</button>
-        <button class="chip ${hidden ? '' : 'on'}" data-toggle>${hidden ? '已隐藏' : '显示中'}</button>
-      </div>`;
-    }).join('');
     Modal.open({
       title: '⚙️ 设置中心', wide: true,
       body: `
@@ -689,7 +679,7 @@ const SettingsUI = {
         </div>
         <div class="card !p-3 mb-3">
           <div class="card-title">🧩 模块管理 <span class="small muted font-normal">（关闭不用的模块，↑↓ 自定义排序）</span></div>
-          <div id="mod-mgr">${modRows}</div>
+          <div id="mod-mgr">${this.modRowsHTML()}</div>
         </div>
         <div class="card !p-3 mb-3">
           <div class="card-title">💾 数据备份 <span class="small muted font-normal">（已用 ${DB.usageKB()} KB）</span></div>
@@ -717,33 +707,68 @@ const SettingsUI = {
         if (swBtn) swBtn.onclick = logout;
         const liBtn = box.querySelector('#acc-login');
         if (liBtn) liBtn.onclick = () => location.reload(); // 游客 → 刷新后自动出现登录门
-        // 模块显示/隐藏 & 排序
-        box.querySelectorAll('[data-toggle]').forEach(btn => btn.onclick = () => {
-          const id = btn.closest('[data-mod]').dataset.mod;
-          const h = Settings.data.hidden;
-          const i = h.indexOf(id);
-          if (i === -1) { h.push(id); Toast.show('已隐藏模块，可随时在设置中恢复', 'info'); } else { h.splice(i, 1); }
-          Settings.save(); SettingsUI.open(); Nav.go(Nav.curTab, Nav.curMod);
+        // 模块显示/隐藏 & 排序（事件委托，排序后只局部刷新列表，不重置弹窗滚动）
+        const mgr = box.querySelector('#mod-mgr');
+        mgr.addEventListener('click', e => {
+          const row = e.target.closest('[data-mod]');
+          if (!row) return;
+          const id = row.dataset.mod;
+          if (e.target.closest('[data-up]')) SettingsUI.move(mgr, id, -1);
+          else if (e.target.closest('[data-down]')) SettingsUI.move(mgr, id, 1);
+          else if (e.target.closest('[data-toggle]')) {
+            const h = Settings.data.hidden, i = h.indexOf(id);
+            if (i === -1) { h.push(id); Toast.show('已隐藏模块，可随时在设置中恢复', 'info'); } else { h.splice(i, 1); }
+            Settings.save(); SettingsUI.open(); Nav.go(Nav.curTab, Nav.curMod);
+          }
         });
-        const move = (id, dir) => {
-          // 在全局 order 中交换该模块与相邻模块的位置
-          const ord = Settings.data.order;
-          const all = MODULES.filter(m => !m.fixed).map(m => m.id);
-          const cur = all.filter(x => ord.includes(x) ? true : (ord.push(x), true));
-          const idx = cur.indexOf(id);
-          const swap = idx + dir;
-          if (swap < 0 || swap >= cur.length) return;
-          [cur[idx], cur[swap]] = [cur[swap], cur[idx]];
-          Settings.data.order = cur; Settings.save(); SettingsUI.open(); Nav.renderSide();
-        };
-        box.querySelectorAll('[data-up]').forEach(b => b.onclick = () => move(b.closest('[data-mod]').dataset.mod, -1));
-        box.querySelectorAll('[data-down]').forEach(b => b.onclick = () => move(b.closest('[data-mod]').dataset.mod, 1));
         // 导入备份
         box.querySelector('#import-file').onchange = e => Backup.importData(e.target.files[0]);
         // 通知与提醒：权限 / 开关 / 提醒增删改
         NotifySettings.mount(box);
       }
     });
+  },
+  // 模块管理列表：按板块分组，组内按当前 order 排列
+  modRowsHTML() {
+    const s = Settings.data;
+    const pos = id => { const i = s.order.indexOf(id); return i === -1 ? 9999 : i; };
+    return TABS.map(t => {
+      const mods = MODULES.filter(m => m.tab === t.id && !m.fixed).sort((a, b) => pos(a.id) - pos(b.id));
+      if (!mods.length) return '';
+      return `<div class="small muted mt-3 mb-1">📂 ${esc(t.name)}</div>` + mods.map(m => {
+        const hidden = s.hidden.includes(m.id);
+        return `<div class="flex items-center gap-2 py-1.5" data-mod="${m.id}">
+          <span class="w-6 text-center">${m.icon}</span>
+          <span class="flex-1 text-sm">${esc(m.name)}</span>
+          <button class="btn btn-sm" data-up title="上移">↑</button>
+          <button class="btn btn-sm" data-down title="下移">↓</button>
+          <button class="chip ${hidden ? '' : 'on'}" data-toggle>${hidden ? '已隐藏' : '显示中'}</button>
+        </div>`;
+      }).join('');
+    }).join('');
+  },
+  // 排序：只在【同板块】内与相邻模块交换（修旧版跨板块交换导致侧栏毫无变化的 bug）
+  move(mgrEl, id, dir) {
+    const order = Settings.data.order;
+    // 规范化的当前全局顺序：未排过序的模块按注册顺序补在后面
+    const globalOrder = MODULES.filter(m => !m.fixed).map(m => m.id)
+      .sort((x, y) => (order.indexOf(x) === -1 ? 9999 : order.indexOf(x)) -
+                      (order.indexOf(y) === -1 ? 9999 : order.indexOf(y)));
+    const tabId = MOD_MAP[id].tab;
+    const peers = globalOrder.filter(x => MOD_MAP[x].tab === tabId);
+    const idx = peers.indexOf(id), j = idx + dir;
+    if (idx === -1 || j < 0 || j >= peers.length) {
+      Toast.show(dir < 0 ? '已经是该板块最上面了' : '已经是该板块最下面了', 'warn');
+      return;
+    }
+    const other = peers[j];
+    const a = globalOrder.indexOf(id), b = globalOrder.indexOf(other);
+    [globalOrder[a], globalOrder[b]] = [globalOrder[b], globalOrder[a]];
+    Settings.data.order = globalOrder;
+    Settings.save();
+    mgrEl.innerHTML = this.modRowsHTML();
+    Nav.go(Nav.curTab, Nav.curMod);
+    Toast.show('✅ 排序已更新');
   },
   // 外观卡片 HTML：深/浅切换 + 7 色品牌色选择（修复旧版 onclick 链里 Modal.close 把设置弹窗关掉的 bug）
   appearanceHTML() {
@@ -1022,9 +1047,9 @@ const DeepLink = {
     const goFallback = () => {
       if (settled) return;
       settled = true;
-      // iOS → App Store；Android → 小米应用商店详情页（打不开则由用户选浏览器看网页）
+      // iOS → App Store；Android → 应用宝详情页（通用，所有浏览器可打开，不再用小米商店页）
       const target = this.isIOS && cfg.iosId ? `https://apps.apple.com/cn/app/id${cfg.iosId}`
-        : (!this.isIOS && cfg.androidPkg) ? `https://app.mi.com/details?id=${cfg.androidPkg}`
+        : (!this.isIOS && cfg.androidPkg) ? `https://sj.qq.com/appdetail/${cfg.androidPkg}`
         : cfg.url;
       window.location.href = target;
     };
@@ -1041,8 +1066,10 @@ const DeepLink = {
 
 /* 常用 App 注册表（scheme / 官网 / iOS App Store ID / Android 包名） */
 const Apps = {
-  // 不背单词（四级真题语境背词）
-  bbdc: { name: '不背单词', scheme: 'bbdc://', url: 'https://bbdc.cn', iosId: '884751417', androidPkg: 'cn.com.langeasy.LangEasyLexis' },
+  // 不背单词（四级真题语境背词；iOS ID 以官网 bbdc.cn 跳转为准）
+  bbdc: { name: '不背单词', scheme: 'bbdc://', url: 'https://bbdc.cn', iosId: '698570469', androidPkg: 'cn.com.langeasy.LangEasyLexis' },
+  // 剪映（抖音官方剪辑；scheme 唤不起时自动走应用宝/App Store）
+  jianying: { name: '剪映', scheme: 'jianying://', url: 'https://www.capcut.cn', iosId: '1458072671', androidPkg: 'com.lemon.lv' },
   // 小宇宙播客
   xyz: { name: '小宇宙', scheme: 'xyzfm://', url: 'https://www.xiaoyuzhoufm.com', iosId: '1488894313', androidPkg: '' },
   // 抖音
@@ -2611,7 +2638,8 @@ Renderers.cet = () => {
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://github.com">🐙 GitHub</a>
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.icourse163.org">🎓 中国大学MOOC</a>
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.coursera.org">📚 Coursera</a>
-      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.bilibili.com/v/learning/">📺 B站学习区</a>
+      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.bilibili.com/v/knowledge/">📺 B站知识区</a>
+      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.bilibili.com/cheese/">🎓 B站课堂</a>
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://open.163.com">📖 网易公开课</a>
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.imooc.com">💻 慕课网</a>
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.runoob.com">📝 菜鸟教程</a>
@@ -2738,6 +2766,35 @@ function addDays(dateStr, n) {
 /* ============ 22. 听力精听：每日时长记录 + 资源直达 ============ */
 const Listen = { data() { return DB.get('wb_cet_listen', { logs: [] }); } };
 
+// 我的抖音学习库：收藏抖音视频链接，一键在 App 内直开该视频
+const DyPicks = {
+  list() { return DB.get('wb_dy_picks', []); },
+  save(l) { DB.set('wb_dy_picks', l); },
+  // 从粘贴文本解析视频 ID 与标题
+  parse(text) {
+    const s = String(text || '');
+    const idM = s.match(/(?:video|note)\/(\d{6,})/);
+    const tM = s.match(/[【\[]([^】\]]{2,40})[】\]]/);
+    return { awemeId: idM ? idM[1] : '', title: tM ? tM[1] : '' };
+  },
+  add(text) {
+    const p = this.parse(text);
+    if (!p.awemeId) return false;
+    const l = this.list();
+    if (l.some(x => x.awemeId === p.awemeId)) return 'dup';
+    l.unshift({ awemeId: p.awemeId, title: p.title, at: Date.now() });
+    this.save(l);
+    return true;
+  },
+  remove(awemeId) { this.save(this.list().filter(x => x.awemeId !== awemeId)); },
+  // 直达：手机唤起抖音 App 内该视频；电脑打开网页版视频
+  open(awemeId) {
+    DeepLink.open({ ...Apps.douyin,
+      url: `https://www.douyin.com/video/${awemeId}`,
+      path: `//aweme/detail/${awemeId}` });
+  }
+};
+
 Renderers.listening = () => {
   const logs = Listen.data().logs.slice().sort((a, b) => b.date.localeCompare(a.date));
   const t = todayStr();
@@ -2770,13 +2827,32 @@ Renderers.listening = () => {
     </div>
   </div>
   <div class="card mb-3">
-    <div class="card-title">🧪 刷题网站 &amp; 抖音短视频</div>
+    <div class="card-title">🧪 刷题网站</div>
     <div class="flex gap-2 flex-wrap">
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.examcrafts.com/">🧪 ExamCrafts（真题刷题+AI批改）</a>
-      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.douyin.com/?recommend=1">📱 抖音精选</a>
-      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.douyin.com/search/%E8%8B%B1%E8%AF%AD%E5%AD%A6%E4%B9%A0?type=video">📱 抖音·英语学习</a>
-      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.douyin.com/search/%E8%8B%B1%E8%AF%AD%E5%90%AC%E5%8A%9B?type=video">📱 抖音·英语听力</a>
-      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.douyin.com/search/%E5%9B%9B%E7%BA%A7%E5%90%AC%E5%8A%9B%E7%9C%9F%E9%A2%98?type=video">📱 抖音·四级听力真题</a>
+    </div>
+  </div>
+  <div class="card mb-3">
+    <div class="card-title">🎵 我的抖音学习库 <span class="small muted font-normal">（点一下直接在抖音 App 打开该视频）</span></div>
+    <p class="small muted mb-2">在抖音刷到好视频 → 点"分享 → 复制链接" → 粘到下面添加。自己收藏的才是高质视频，以后一键直达，不用再搜。</p>
+    <div class="flex gap-2">
+      <input class="input flex-1" id="ln-dy-link" placeholder="粘贴抖音视频链接，如 https://v.douyin.com/xxx 或 /video/数字">
+      <button class="btn btn-pri" id="ln-dy-add">➕ 收藏</button>
+    </div>
+    <div class="mt-2">
+      ${DyPicks.list().length ? DyPicks.list().map((p, i) => `
+        <div class="flex items-center gap-2 py-1.5 border-b" style="border-color:var(--border)">
+          <span class="small muted" style="width:24px">${i + 1}</span>
+          <span class="flex-1 text-sm truncate">${esc(p.title || '抖音视频 ' + p.awemeId)}</span>
+          <button class="btn btn-sm btn-pri" data-dy-open="${p.awemeId}">▶ 打开</button>
+          <button class="btn btn-sm btn-danger" data-dy-del="${p.awemeId}">✕</button>
+        </div>`).join('') : '<div class="small muted">还没有收藏视频，去抖音复制一个好视频链接粘进来吧</div>'}
+    </div>
+    <div class="small muted mt-2 mb-1">🔍 去抖音找更多（精准词，建议挑点赞高的再收藏到上面）</div>
+    <div class="flex gap-2 flex-wrap">
+      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.douyin.com/search/%E5%9B%9B%E7%BA%A7%E5%90%AC%E5%8A%9B%E6%8A%80%E5%B7%A7?type=video">四级听力技巧</a>
+      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.douyin.com/search/%E8%8B%B1%E8%AF%AD%E5%8F%91%E9%9F%B3%E7%B2%BE%E8%AE%B2?type=video">英语发音精讲</a>
+      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.douyin.com/search/%E8%8B%B1%E8%AF%AD%E8%AF%AD%E6%B3%95%E7%B2%BE%E8%AE%B2?type=video">英语语法精讲</a>
     </div>
   </div>
   <div class="card mb-3">
@@ -2785,7 +2861,8 @@ Renderers.listening = () => {
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://github.com">🐙 GitHub</a>
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.icourse163.org">🎓 中国大学MOOC</a>
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.coursera.org">📚 Coursera</a>
-      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.bilibili.com/v/learning/">📺 B站学习区</a>
+      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.bilibili.com/v/knowledge/">📺 B站知识区</a>
+      <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.bilibili.com/cheese/">🎓 B站课堂</a>
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://open.163.com">📖 网易公开课</a>
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.imooc.com">💻 慕课网</a>
       <a class="btn btn-sm" target="_blank" rel="noopener noreferrer" href="https://www.runoob.com">📝 菜鸟教程</a>
@@ -2817,6 +2894,32 @@ AfterRender.listening = box => {
     Checkin.record('cet', { minutes });
     Toast.show(`已记录 ${minutes} 分钟听力打卡！`); Nav.refresh();
   };
+  // 抖音学习库：收藏
+  const linkInput = box.querySelector('#ln-dy-link');
+  const addPick = async () => {
+    const val = linkInput.value.trim();
+    if (!val) { Toast.show('先粘贴抖音视频链接', 'warn'); return; }
+    let r = DyPicks.add(val);
+    // 短链：尝试跟随跳转解析（部分浏览器允许时可用）
+    if (!r) {
+      const sm = val.match(/https?:\/\/v\.douyin\.com\/[^\s，]+/);
+      if (sm) {
+        try { const fr = await fetch(sm[0], { redirect: 'follow' }); r = DyPicks.add(fr.url); } catch (e) {}
+      }
+    }
+    if (r === 'dup') Toast.show('这个视频已经收藏过啦', 'warn');
+    else if (r) { Toast.show('✅ 已收藏，点"打开"直达视频'); Nav.refresh(); }
+    else Toast.show('没识别出视频，建议在抖音"分享 → 复制链接"后完整粘贴', 'warn');
+  };
+  box.querySelector('#ln-dy-add').onclick = addPick;
+  linkInput.addEventListener('keydown', e => { if (e.key === 'Enter') addPick(); });
+  // 打开 / 删除（事件委托）
+  box.addEventListener('click', e => {
+    const o = e.target.closest('[data-dy-open]');
+    if (o) { DyPicks.open(o.dataset.dyOpen); return; }
+    const d = e.target.closest('[data-dy-del]');
+    if (d) { DyPicks.remove(d.dataset.dyDel); Toast.show('已取消收藏'); Nav.refresh(); }
+  });
 };
 
 /* ============ 23. 真题成绩记录 + 分数走势图（Canvas） ============ */
@@ -3870,6 +3973,81 @@ const BADUAN = [
   '两手托天理三焦', '左右开弓似射雕', '调理脾胃须单举', '五劳七伤往后瞧',
   '摇头摆尾去心火', '两手攀足固肾腰', '攒拳怒目增气力', '背后七颠百病消'
 ];
+
+/* 八段锦动作动画图：内联 SVG + SMIL，火柴人循环演示每式动作
+ * SMIL rotate 取值格式 "角度 轴心x 轴心y"，绕肩(50,54)/髋(50,84)/颈(50,48)转
+ */
+function bdjAnim(i) {
+  const KT5 = ' keyTimes="0;0.25;0.5;0.75;1"';
+  const rot = (type, vals, dur, kt) =>
+    `<animateTransform attributeName="transform" type="rotate" values="${vals}"${kt || ' keyTimes="0;0.5;1"'} dur="${dur}" repeatCount="indefinite"/>`;
+  const trn = (vals, dur, kt) =>
+    `<animateTransform attributeName="transform" type="translate" values="${vals}"${kt} dur="${dur}" repeatCount="indefinite"/>`;
+  // 共用：腿脚（默认站姿）；手臂两条（下垂），用 pri 色突出
+  const LEGS = `<g fill="none" stroke="var(--text)" stroke-width="3" stroke-linecap="round">
+      <path d="M50 84 L44 93 L40 101"/><path d="M50 84 L56 93 L60 101"/>
+      <path d="M36 102 L44 102"/><path d="M56 102 L64 102"/></g>`;
+  const TORSO = `<path d="M50 84 L50 55"/>`;
+  const HEAD = `<circle cx="50" cy="41" r="7"/>`;
+  const ARMS = `<path d="M50 54 L42 78"/><path d="M50 54 L58 78"/>`;
+  const body = (inner, strokeColor) =>
+    `<svg viewBox="0 0 100 106" style="width:100%;max-width:118px;height:auto;display:block;margin:0 auto">
+      ${LEGS}
+      <g fill="none" stroke="${strokeColor || 'var(--text)'}" stroke-width="3" stroke-linecap="round">${inner}</g>
+    </svg>`;
+  const armG = (side, anim) => `<g stroke="var(--pri)">${side === 'l' ? '<path d="M50 54 L42 78"/>' : '<path d="M50 54 L58 78"/>'}${anim}</g>`;
+  const KT3 = ' keyTimes="0;0.5;1"';
+
+  switch (i) {
+    case 0: // 托天：双臂上举，身体上拔
+      return body(
+        `<g>${TORSO}${HEAD}${trn('0 0;0 -2;0 0', '3.6s', KT3)}</g>` +
+        armG('l', rot('rotate', '0 50 54;-165 50 54;0 50 54', '3.6s')) +
+        armG('r', rot('rotate', '0 50 54;165 50 54;0 50 54', '3.6s')));
+    case 1: // 射雕：左右交替拉弓
+      return body(
+        `<g>${TORSO}${HEAD}<g>${rot('rotate', '0 50 48;-10 50 48;0 50 48;10 50 48;0 50 48', '4s', KT5)}</g></g>` +
+        armG('l', rot('rotate', '0 50 54;-78 50 54;0 50 54;78 50 54;0 50 54', '4s', KT5)) +
+        armG('r', rot('rotate', '0 50 54;78 50 54;0 50 54;-78 50 54;0 50 54', '4s', KT5)));
+    case 2: // 单举：左右臂交替上托下按
+      return body(
+        TORSO + HEAD +
+        armG('l', rot('rotate', '0 50 54;-160 50 54;-160 50 54;0 50 54;0 50 54', '4s', KT5)) +
+        armG('r', rot('rotate', '0 50 54;0 50 54;0 50 54;160 50 54;160 50 54', '4s', KT5)));
+    case 3: // 往后瞧：头左右转
+      return body(
+        `<g>${TORSO}${rot('rotate', '0 50 84;-6 50 84;6 50 84;0 50 84', '3.8s', ' keyTimes="0;0.3;0.7;1"')}</g>` +
+        `<g>${HEAD}${rot('rotate', '-40 50 48;40 50 48;-40 50 48', '3.8s')}</g>` +
+        armG('l', rot('rotate', '0 50 54;-12 50 54;12 50 54;0 50 54', '3.8s', ' keyTimes="0;0.3;0.7;1"')) +
+        armG('r', rot('rotate', '0 50 54;12 50 54;-12 50 54;0 50 54', '3.8s', ' keyTimes="0;0.3;0.7;1"')));
+    case 4: // 摇头摆尾：头与髋反向摆动
+      return body(
+        `<g>${rot('rotate', '10 50 84;-10 50 84;10 50 84', '3.4s')}${TORSO}
+           <g>${HEAD}${rot('rotate', '-15 50 48;15 50 48;-15 50 48', '3.4s')}</g></g>` +
+        armG('l', rot('rotate', '0 50 54;14 50 54;0 50 54', '3.4s')) +
+        armG('r', rot('rotate', '0 50 54;-14 50 54;0 50 54', '3.4s')));
+    case 5: // 攀足：上身前屈摸脚
+      return body(
+        `<g>${rot('rotate', '0 50 84;68 50 84;0 50 84', '4.2s')}
+           ${TORSO}${HEAD}
+           <g stroke="var(--pri)"><path d="M50 54 L42 78"/><path d="M50 54 L58 78"/></g>
+         </g>`);
+    case 6: // 攒拳：左右交替冲拳
+      return body(
+        TORSO + HEAD +
+        armG('r', rot('rotate', '0 50 54;72 50 54;72 50 54;0 50 54;0 50 54', '3.6s', KT5)) +
+        armG('l', rot('rotate', '0 50 54;0 50 54;0 50 54;72 50 54;72 50 54', '3.6s', KT5)));
+    case 7: // 背后七颠：提踵轻颠
+      return body(
+        `<g>${trn('0 0;-6 0;0 0;-6 0;0 0;-6 0;0 0', '2.2s', ' keyTimes="0;0.14;0.28;0.42;0.56;0.7;1"')}
+           ${TORSO}${HEAD}
+           <g stroke="var(--pri)" transform="rotate(-30 50 54)">
+             <path d="M50 54 L42 78"/><path d="M50 54 L58 78"/>
+           </g>
+         </g>`);
+  }
+  return '';
+}
 const HEALTH_TIPS = [
   '23点前睡觉比任何护肤品都管用',
   '每天喝够 1500-1700ml 温水，少量多次',
@@ -3903,13 +4081,14 @@ Renderers.wellness = () => {
   <div class="card mb-3">
     <div class="card-title">🧘 八段锦打卡（约 12 分钟，点一式勾一式）</div>
     <div class="progress mb-3"><div style="width:${Math.round(todayDone.length / 8 * 100)}%"></div></div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-1">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
       ${BADUAN.map((name, i) => {
         const id = 'bd' + i, ok = todayDone.includes(id);
-        return `<div class="flex items-center gap-2 py-2 px-2 rounded-lg cursor-pointer" data-bd="${id}"
-          style="${ok ? 'background:var(--pri-soft)' : ''}">
-          <span>${ok ? '✅' : '◻️'}</span>
-          <span class="text-sm ${ok ? '' : 'muted'}">第${['一','二','三','四','五','六','七','八'][i]}式 · ${esc(name)}</span>
+        return `<div class="card !p-2 text-center cursor-pointer" data-bd="${id}"
+          style="${ok ? 'border-color:var(--pri);background:var(--pri-soft)' : ''}">
+          ${bdjAnim(i)}
+          <div class="small mt-1">${ok ? '✅' : '◻️'} 第${['一','二','三','四','五','六','七','八'][i]}式</div>
+          <div class="small ${ok ? '' : 'muted'}">${esc(name)}</div>
         </div>`;
       }).join('')}
     </div>
@@ -6430,7 +6609,8 @@ Renderers.websites = () => {
     { icon: '💻', name: 'GitHub', url: 'https://github.com' },
     { icon: '🎓', name: '中国大学MOOC', url: 'https://www.icourse163.org' },
     { icon: '🌍', name: 'Coursera', url: 'https://www.coursera.org' },
-    { icon: '📺', name: 'B站学习区', url: 'https://www.bilibili.com' },
+    { icon: '📺', name: 'B站知识区', url: 'https://www.bilibili.com/v/knowledge/' },
+    { icon: '🎓', name: 'B站课堂', url: 'https://www.bilibili.com/cheese/' },
     { icon: '💡', name: '知乎', url: 'https://www.zhihu.com' },
     { icon: '📖', name: '网易公开课', url: 'https://open.163.com' },
     { icon: '🔧', name: '慕课网', url: 'https://www.imooc.com' },
@@ -6708,15 +6888,19 @@ Renderers.edit = () => {
     <div class="card-title">🛠️ 常用工具</div>
     <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
       ${[
-        { icon: '🎬', name: '剪映', url: 'https://www.capcut.cn' },
+        { icon: '🎬', name: '剪映', url: 'https://www.capcut.cn', deep: true },
         { icon: '🎬', name: 'Premiere', url: 'https://www.adobe.com/products/premiere.html' },
         { icon: '🎬', name: 'Final Cut', url: 'https://www.apple.com/final-cut-pro/' },
         { icon: '🎬', name: 'DaVinci', url: 'https://www.blackmagicdesign.com/products/davinciresolve' },
         { icon: '🎵', name: 'Audition', url: 'https://www.adobe.com/products/audition.html' },
         { icon: '🎨', name: 'After Effects', url: 'https://www.adobe.com/products/aftereffects.html' }
-      ].map(t => `<a class="card !p-3 text-center" href="${t.url}" target="_blank" rel="noopener noreferrer">
-        <div style="font-size:20px">${t.icon}</div><div class="small mt-1">${esc(t.name)}</div>
-      </a>`).join('')}
+      ].map(t => t.deep
+        ? `<button class="card !p-3 text-center w-full" onclick="DeepLink.open(Apps.jianying)" title="手机唤起剪映App，电脑打开剪映官网">
+            <div style="font-size:20px">${t.icon}</div><div class="small mt-1">${esc(t.name)} 📱</div>
+          </button>`
+        : `<a class="card !p-3 text-center" href="${t.url}" target="_blank" rel="noopener noreferrer">
+            <div style="font-size:20px">${t.icon}</div><div class="small mt-1">${esc(t.name)}</div>
+          </a>`).join('')}
     </div>
   </div>
   <div class="card">
