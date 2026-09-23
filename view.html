@@ -330,8 +330,12 @@ const DB = {
     catch (e) { return def; }
   },
   set(key, val) {
-    try { localStorage.setItem(this.pref() + key, JSON.stringify(val)); return true; }
-    catch (e) { Toast.show('保存失败：浏览器存储空间可能已满（照片建议压缩），请导出备份后清理', 'error'); return false; }
+    try {
+      localStorage.setItem(this.pref() + key, JSON.stringify(val));
+      gSet('pw_local_change', Date.now());
+      if (typeof CloudSync !== 'undefined') CloudSync.schedulePush();
+      return true;
+    } catch (e) { Toast.show('保存失败：浏览器存储空间可能已满（照片建议压缩），请导出备份后清理', 'error'); return false; }
   },
   del(key) { localStorage.removeItem(this.pref() + key); },
   // 汇总当前账号全部业务数据（导出备份用）；导出的 key 统一为 wb_xxx 形式
@@ -681,6 +685,10 @@ const SettingsUI = {
           <div class="card-title">🧩 模块管理 <span class="small muted font-normal">（关闭不用的模块，↑↓ 自定义排序）</span></div>
           <div id="mod-mgr">${this.modRowsHTML()}</div>
         </div>
+        <div class="card !p-3 mb-3" id="settings-cloud">
+          <div class="card-title">☁️ 云同步 <span class="small muted font-normal">（手机电脑数据互通）</span></div>
+          ${this.cloudSyncHTML()}
+        </div>
         <div class="card !p-3 mb-3">
           <div class="card-title">💾 数据备份 <span class="small muted font-normal">（已用 ${DB.usageKB()} KB）</span></div>
           <div class="flex gap-2 flex-wrap">
@@ -723,6 +731,33 @@ const SettingsUI = {
         });
         // 导入备份
         box.querySelector('#import-file').onchange = e => Backup.importData(e.target.files[0]);
+        // 云同步（事件委托，renderCloudSync 刷新内容后事件仍然有效）
+        const cloud = box.querySelector('#settings-cloud');
+        if (cloud) cloud.addEventListener('click', async e => {
+          if (e.target.closest('#cs-connect')) {
+            const inp = cloud.querySelector('#cs-token');
+            if (!inp || !inp.value.trim()) { Toast.show('先粘贴 Token', 'warn'); return; }
+            const btn = e.target.closest('#cs-connect');
+            btn.textContent = '连接中...'; btn.disabled = true;
+            const err = await CloudSync.setup(inp.value);
+            btn.textContent = '🔗 连接'; btn.disabled = false;
+            if (err) Toast.show(err, 'error');
+            else { Toast.show('✅ 云同步已连接！'); SettingsUI.renderCloudSync(); }
+          } else if (e.target.closest('#cs-sync-now')) {
+            const btn = e.target.closest('#cs-sync-now');
+            btn.textContent = '同步中...'; btn.disabled = true;
+            const r = await CloudSync.sync();
+            btn.textContent = '🔄 立即同步'; btn.disabled = false;
+            Toast.show(r.msg, r.status === 'fail' ? 'error' : 'info');
+            if (r.status === 'pulled') { Toast.show('3 秒后刷新页面加载云端数据', 'info'); setTimeout(() => location.reload(), 3000); }
+            else SettingsUI.renderCloudSync();
+          } else if (e.target.closest('#cs-disconnect')) {
+            const ok = await Dialog.confirm({ title: '断开云同步', text: '断开后不再自动同步，但已上传的数据仍在 Gist 上。确定断开吗？', okText: '断开' });
+            if (!ok) return;
+            CloudSync.disconnect();
+            Toast.show('已断开云同步'); SettingsUI.renderCloudSync();
+          }
+        });
         // 通知与提醒：权限 / 开关 / 提醒增删改
         NotifySettings.mount(box);
       }
@@ -789,6 +824,34 @@ const SettingsUI = {
     const el = document.getElementById('settings-appearance');
     if (!el) return;
     el.innerHTML = '<div class="card-title">🎨 外观</div>' + this.appearanceHTML();
+  },
+  // 云同步卡片 HTML
+  cloudSyncHTML() {
+    if (CloudSync.enabled()) {
+      const last = CloudSync.lastSync();
+      const t = last ? new Date(last).toLocaleString('zh-CN') : '未知';
+      return `<div class="small mb-1">✅ 已连接 GitHub Gist，数据变动 3 秒后自动上传</div>
+        <div class="small muted mb-2">最后同步：${t}</div>
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn btn-pri" id="cs-sync-now">🔄 立即同步</button>
+          <button class="btn btn-danger" id="cs-disconnect">断开</button>
+        </div>
+        <p class="small muted mt-2">在另一台设备打开工作台 → 设置 → 云同步 → 粘贴同一个 Token 即可连接同一个 Gist，数据自动互通。</p>`;
+    }
+    return `<div class="small muted mb-2">用 GitHub Gist 做免费云盘：数据变动自动上传，打开应用自动拉取。手机电脑用同一个 Token 即可互通。</div>
+      <div class="small mb-1">① 打开 <a href="https://github.com/settings/tokens/new?scopes=gist" target="_blank" rel="noopener noreferrer">GitHub Token 生成页</a>，勾选 <code>gist</code> 权限，生成后复制</div>
+      <div class="small mb-1">② 粘贴到下面，点"连接"</div>
+      <div class="flex gap-2">
+        <input class="input flex-1" id="cs-token" type="password" placeholder="粘贴 GitHub Token（需 gist 权限）">
+        <button class="btn btn-pri" id="cs-connect">🔗 连接</button>
+      </div>
+      <p class="small muted mt-2">Token 只存在本设备，不会上传到任何其他服务器。每个账号需各自配置一次。</p>`;
+  },
+  // 就地刷新云同步卡片（不关弹窗、不重置滚动）
+  renderCloudSync() {
+    const el = document.getElementById('settings-cloud');
+    if (!el) return;
+    el.innerHTML = '<div class="card-title">☁️ 云同步 <span class="small muted font-normal">（手机电脑数据互通）</span></div>' + this.cloudSyncHTML();
   }
 };
 
@@ -835,6 +898,112 @@ const Backup = {
     Object.keys(localStorage).filter(k => k.startsWith(pre)).forEach(k => localStorage.removeItem(k));
     Toast.show('已清空，即将刷新');
     setTimeout(() => location.reload(), 1000);
+  }
+};
+
+/* ============ 7.5 云同步：GitHub Gist 自动同步（手机电脑数据互通） ============ */
+const CloudSync = {
+  _timer: null,
+  FILE: 'workbench-data.json',
+  token() { return gGet('pw_gist_token', ''); },
+  gistId() { return gGet('pw_gist_id', ''); },
+  enabled() { return !!this.token() && !!this.gistId(); },
+  lastSync() { return gGet('pw_gist_last', 0); },
+  localMs() { return gGet('pw_local_change', 0); },
+  gistUrl() { return this.gistId() ? `https://gist.github.com/${this.gistId().slice(0, 20)}` : ''; },
+  // 验证 token 并创建 Gist
+  async setup(token) {
+    token = (token || '').trim();
+    if (!token) return '请粘贴 GitHub Token';
+    const r = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (r.status === 401) return 'Token 无效或已过期，请重新生成';
+    if (!r.ok) return '验证失败（HTTP ' + r.status + '）';
+    const scopes = r.headers.get('x-oauth-scopes') || '';
+    if (!scopes.includes('gist')) return 'Token 缺少 gist 权限，请重新生成（勾选 gist）';
+    const payload = {
+      description: '个人工作台数据同步（自动生成，请勿手动删除）',
+      public: false,
+      files: { [this.FILE]: { content: JSON.stringify({ version: 1, data: DB.dump(), updatedAt: new Date().toISOString(), account: Account.current?.name || 'guest', localMs: Date.now() }, null, 2) } }
+    };
+    const gr = await fetch('https://api.github.com/gists', {
+      method: 'POST',
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' },
+      body: JSON.stringify(payload)
+    });
+    if (!gr.ok) return '创建 Gist 失败（HTTP ' + gr.status + '）';
+    const g = await gr.json();
+    gSet('pw_gist_token', token);
+    gSet('pw_gist_id', g.id);
+    gSet('pw_gist_last', Date.now());
+    gSet('pw_local_change', Date.now());
+    return null;
+  },
+  // 拉取云端数据
+  async pull() {
+    if (!this.enabled()) return null;
+    try {
+      const r = await fetch(`https://api.github.com/gists/${this.gistId()}`, {
+        headers: { 'Authorization': `token ${this.token()}`, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (!r.ok) return null;
+      const g = await r.json();
+      const f = g.files[this.FILE];
+      if (!f || !f.content) return null;
+      return JSON.parse(f.content);
+    } catch (e) { return null; }
+  },
+  // 推送本地数据到云端
+  async push() {
+    if (!this.enabled()) return false;
+    try {
+      const payload = { version: 1, data: DB.dump(), updatedAt: new Date().toISOString(), account: Account.current?.name || 'guest', localMs: Date.now() };
+      const r = await fetch(`https://api.github.com/gists/${this.gistId()}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `token ${this.token()}`, 'Accept': 'application/vnd.github.v3+json' },
+        body: JSON.stringify({ files: { [this.FILE]: { content: JSON.stringify(payload, null, 2) } } })
+      });
+      if (!r.ok) return false;
+      gSet('pw_gist_last', Date.now());
+      gSet('pw_local_change', Date.now());
+      return true;
+    } catch (e) { return false; }
+  },
+  // 智能同步：比较时间戳，新数据覆盖旧数据
+  async sync() {
+    if (!this.enabled()) return { status: 'disabled', msg: '云同步未开启' };
+    const cloud = await this.pull();
+    if (!cloud) return { status: 'fail', msg: '拉取云端失败，请检查网络或 Token' };
+    const cloudMs = cloud.localMs || 0;
+    const localMs = this.localMs();
+    if (cloudMs > localMs + 2000) { // 云端更新（2 秒容差）
+      DB.restore(cloud.data);
+      gSet('pw_local_change', cloudMs);
+      gSet('pw_gist_last', Date.now());
+      return { status: 'pulled', msg: '已从云端拉取最新数据' };
+    } else if (localMs > cloudMs + 2000) { // 本地更新
+      const ok = await this.push();
+      return { status: ok ? 'pushed' : 'fail', msg: ok ? '本地数据已上传云端' : '上传失败，请稍后重试' };
+    } else {
+      gSet('pw_gist_last', Date.now());
+      return { status: 'in-sync', msg: '本地与云端已一致，无需同步' };
+    }
+  },
+  // 防抖上传：数据变动后 3 秒自动上传（只读模式不上传）
+  schedulePush() {
+    if (!this.enabled()) return;
+    if (document.body.classList.contains('view-only')) return;
+    if (this._timer) clearTimeout(this._timer);
+    this._timer = setTimeout(() => {
+      this.push();
+    }, 3000);
+  },
+  disconnect() {
+    localStorage.removeItem('pw_gist_token');
+    localStorage.removeItem('pw_gist_id');
+    localStorage.removeItem('pw_gist_last');
+    localStorage.removeItem('pw_local_change');
   }
 };
 
@@ -7313,6 +7482,15 @@ function startApp() {
   Ach.check();
   Guide.maybe();
   Reminders.start();
+  // 启动后自动拉取云端同步（延迟 2 秒，等初始化完成）
+  if (!isView && CloudSync.enabled()) {
+    setTimeout(() => CloudSync.sync().then(r => {
+      if (r.status === 'pulled') {
+        Toast.show('☁️ 已从云端同步最新数据，即将刷新', 'info');
+        setTimeout(() => location.reload(), 1500);
+      }
+    }), 2000);
+  }
 }
 // 入口：只读模式(?view=1 或 view.html)直接进；否则账号判断 + 访问密码门
 function boot() {
