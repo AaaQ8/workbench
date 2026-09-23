@@ -151,7 +151,26 @@ async function init() {
     showGate(false);
     await refresh();
   } else {
-    showErr('未找到管理数据 Gist。请先在工作台中打开页面以自动创建。');
+    // 找不到就自动创建一个管理 Gist
+    showErr('正在创建管理数据仓库...');
+    const cr = await fetch('https://api.github.com/gists', {
+      method: 'POST',
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
+      body: JSON.stringify({
+        description: '工作台管理后台日志（自动生成，请勿删除）',
+        public: false,
+        files: {
+          [FILE_LOGS]: { content: JSON.stringify({ visits: [] }, null, 2) },
+          [FILE_ACCOUNTS]: { content: JSON.stringify([], null, 2) }
+        }
+      })
+    });
+    if (!cr.ok) { showErr('创建失败：HTTP ' + cr.status); return; }
+    const g = await cr.json();
+    gistId = g.id;
+    localStorage.setItem(GIST_ID_KEY, gistId);
+    showGate(false);
+    await refresh();
   }
 }
 
