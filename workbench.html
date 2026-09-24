@@ -327,7 +327,7 @@ const Account = {
 };
 
 // 构建版本号：部署时由 deploy_github.py 自动注入（设置 → 云同步 卡片显示，用于确认设备拿到最新版）
-const APP_VER = '0924-1330';
+const APP_VER = '0924-1334';
 
 const DB = {
   // 当前存储前缀：游客 pw_；登录账号 pw_u{账号id}_，各账号数据互不可见
@@ -849,6 +849,14 @@ const SettingsUI = {
           <button class="btn btn-danger" id="cs-disconnect">断开</button>
         </div>
         <p class="small muted mt-2">版本 <b>${APP_VER}</b> · 云端仓库尾号 <b>…${(CloudSync.gistId() || '').slice(-6)}</b> · 上次同步 <b>${CloudSync.lastSync() ? new Date(CloudSync.lastSync()).toLocaleString('sv') : '从未'}</b></p>
+        ${(() => {
+          const st = gGet('pw_sync_status', null);
+          if (!st) return '';
+          const when = st.ts ? new Date(st.ts).toLocaleString('sv') : '';
+          return st.ok
+            ? `<div class="small mt-1" style="color:var(--ok)">✅ ${esc(st.msg)} · ${when}</div>`
+            : `<div class="small mt-1" style="color:var(--err)">❌ ${esc(st.msg)} · ${when}</div>`;
+        })()}
         <p class="small muted mt-1">多台设备互通要点：①所有设备粘<b>同一个 Token</b>；②对比每台设备这里的"云端仓库尾号"，<b>尾号相同才在同一仓库</b>；③此页版本号每台设备一致才都支持自动对账。</p>`;
     }
     return `<div class="small muted mb-2">用 GitHub Gist 做免费云盘：数据变动自动上传，打开应用自动拉取。手机电脑用同一个 Token 即可互通。</div>
@@ -988,22 +996,9 @@ const CloudSync = {
     gSet('pw_gist_token', token);
     gSet('pw_gist_id', gistId);
     gSet('pw_gist_last', Date.now());
+    gSet('pw_sync_status', { ok: true, msg: '已连接', ts: Date.now() });
     if (!this.localMs()) localStorage.setItem(DB.pref() + 'local_change', JSON.stringify(Date.now()));
     return { err: null, pulled: !!foundExisting };
-  },
-  // 拉取云端数据
-  async pull() {
-    if (!this.enabled()) return null;
-    try {
-      const r = await fetch(`https://api.github.com/gists/${this.gistId()}`, {
-        headers: { 'Authorization': `token ${this.token()}`, 'Accept': 'application/vnd.github.v3+json' }
-      });
-      if (!r.ok) return null;
-      const g = await r.json();
-      const f = g.files[this.FILE];
-      if (!f || !f.content) return null;
-      return JSON.parse(f.content);
-    } catch (e) { return null; }
   },
   // 推送本地数据到云端
   async push() {
@@ -1015,14 +1010,26 @@ const CloudSync = {
         headers: { 'Authorization': `token ${this.token()}`, 'Accept': 'application/vnd.github.v3+json' },
         body: JSON.stringify({ files: { [this.FILE]: { content: JSON.stringify(payload, null, 2) } } })
       });
-      if (!r.ok) return false;
+      if (!r.ok) {
+        gSet('pw_sync_status', { ok: false, msg: r.status === 401 || r.status === 403 ? 'Token 已失效，自动上传被拒绝' : '自动上传失败（HTTP ' + r.status + '）', ts: Date.now() });
+        return false;
+      }
       gSet('pw_gist_last', Date.now());
       localStorage.setItem(DB.pref() + 'local_change', JSON.stringify(Date.now()));
+      gSet('pw_sync_status', { ok: true, msg: '已自动上传', ts: Date.now() });
       return true;
-    } catch (e) { return false; }
+    } catch (e) {
+      gSet('pw_sync_status', { ok: false, msg: '网络不通，自动上传失败', ts: Date.now() });
+      return false;
+    }
   },
-  // 智能同步：比较时间戳，新数据覆盖旧数据
+  // 智能同步（记录状态供设置页常驻显示）
   async sync() {
+    const r = await this._sync();
+    gSet('pw_sync_status', { ok: r.status === 'pulled' || r.status === 'pushed' || r.status === 'in-sync', status: r.status, msg: r.msg, ts: Date.now() });
+    return r;
+  },
+  async _sync() {
     if (!this.enabled()) return { status: 'disabled', msg: '云同步未开启' };
     await this.reconcile(); // 先对账，确保指向账号下最新的 Gist
     const r = await fetch(`https://api.github.com/gists/${this.gistId()}`, {
@@ -1086,6 +1093,7 @@ const CloudSync = {
     localStorage.removeItem('pw_gist_token');
     localStorage.removeItem('pw_gist_id');
     localStorage.removeItem('pw_gist_last');
+    localStorage.removeItem('pw_sync_status');
     localStorage.removeItem(DB.pref() + 'local_change');
   }
 };
