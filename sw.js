@@ -1,7 +1,7 @@
 /* Service Worker:让工作台像 App 一样
    1) 离线缓存核心资源
    2) 接收页面消息触发系统通知(页面后台时也能弹) */
-const CACHE = 'pw-cache-v2';
+const CACHE = 'pw-cache-v3';
 const ASSETS = [
   './',
   './index.html',
