@@ -327,7 +327,7 @@ const Account = {
 };
 
 // 构建版本号：部署时由 deploy_github.py 自动注入（设置 → 云同步 卡片显示，用于确认设备拿到最新版）
-const APP_VER = '0924-1324';
+const APP_VER = '0924-1329';
 
 const DB = {
   // 当前存储前缀：游客 pw_；登录账号 pw_u{账号id}_，各账号数据互不可见
@@ -1472,6 +1472,19 @@ function openDouyin(url) {
   const idM = String(url || '').match(/\/(?:video|note)\/(\d+)/);
   DeepLink.open({ ...Apps.douyin, url: url || Apps.douyin.url, path: idM ? '//aweme/detail/' + idM[1] : '' });
 }
+/* SmartLink：收藏夹等处的链接全平台通用打开器
+   电脑：新标签打开网页；手机：识别链接归属 App，先唤起 App（失败 1.8 秒后自动回网页）
+   支持：抖音视频（App 内直开该视频）、B站视频（bilibili://video/BV…）；其他链接直接打开网页 */
+const SmartLink = {
+  open(url) {
+    url = String(url || '');
+    if (/douyin\.com|iesdouyin\.com/.test(url)) { openDouyin(url); return; }
+    const cfg = { name: '链接', url };
+    const bv = url.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]{8,})/);
+    if (bv) cfg.scheme = 'bilibili://video/' + bv[1]; // 唤不起时 DeepLink 自动回退打开原网页
+    DeepLink.open(cfg);
+  }
+};
 // 事件委托：加载 iframe / 删除视频
 document.addEventListener('click', e => {
   const cover = e.target.closest('[data-embed]');
@@ -6960,7 +6973,7 @@ Renderers.favorites = () => {
     <div class="card-title">📋 收藏列表（${shown.length}）</div>
     ${shown.length ? shown.map(f => `<div class="flex items-center gap-2 py-2 border-b" style="border-color:var(--border)">
       <span class="chip" style="font-size:11px">${esc(f.cat)}</span>
-      <a class="flex-1 small truncate" href="${esc(f.url)}" target="_blank" rel="noopener noreferrer">${esc(f.title)}</a>
+      <a class="flex-1 small truncate" href="${esc(f.url)}" data-fav-open="${f.id}" style="color:var(--pri);text-decoration:none">${esc(f.title)}</a>
       <span class="small muted">${esc(f.date)}</span>
       <button class="btn btn-sm btn-danger" data-fav-del="${f.id}">✕</button>
     </div>`).join('') : '<div class="small muted">还没有收藏，或此分类下暂无内容</div>'}
@@ -6981,6 +6994,13 @@ AfterRender.favorites = box => {
     Nav.refresh();
   });
   box.addEventListener('click', async e => {
+    const link = e.target.closest('a[data-fav-open]');
+    if (link) {
+      e.preventDefault(); // 拦截默认跳转：手机唤起对应 App（抖音/B站直开），电脑新标签开网页；长按复制链接不受影响
+      const f = DB.get('wb_favs', []).find(x => x.id === link.dataset.favOpen);
+      if (f) SmartLink.open(f.url);
+      return;
+    }
     const del = e.target.closest('[data-fav-del]');
     if (!del) return;
     if (!await Dialog.confirm({ title: '删除收藏', danger: true, text: '删除这条收藏？', okText: '删除' })) return;
