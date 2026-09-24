@@ -327,7 +327,7 @@ const Account = {
 };
 
 // 构建版本号：部署时由 deploy_github.py 自动注入（设置 → 云同步 卡片显示，用于确认设备拿到最新版）
-const APP_VER = '0924-1337';
+const APP_VER = '0924-1418';
 
 const DB = {
   // 当前存储前缀：游客 pw_；登录账号 pw_u{账号id}_，各账号数据互不可见
@@ -1072,11 +1072,20 @@ const CloudSync = {
       this.push();
     }, 1500);
   },
-  // 启动挂载：页面切到后台时立即上传（防止用户改完数据马上关页面导致改动丢失）
+  // 启动挂载：①切后台瞬间立即上传（改完马上关页面也不丢）②切回标签页立即拉取云端 ③开着时每 40 秒自动对账
   init() {
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden && this._timer) { clearTimeout(this._timer); this._timer = null; this.push(); }
+      if (document.hidden) {
+        if (this._timer) { clearTimeout(this._timer); this._timer = null; this.push(); }
+      } else if (this.enabled()) {
+        this.sync().then(r => { if (r.status === 'pulled') location.reload(); }); // 云端更新了，自动刷新显示
+      }
     });
+    setInterval(() => {
+      if (this.enabled() && !document.hidden && !this._timer) {
+        this.sync().then(r => { if (r.status === 'pulled') location.reload(); }); // 别的设备改了数据 → 本页自动刷新
+      }
+    }, 40000);
   },
   // 对账：自动指向账号下最新的工作台 Gist（修复多设备各自连了不同旧 Gist 导致不同步）
   async reconcile() {
