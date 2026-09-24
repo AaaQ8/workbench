@@ -327,7 +327,7 @@ const Account = {
 };
 
 // 构建版本号：部署时由 deploy_github.py 自动注入（设置 → 云同步 卡片显示，用于确认设备拿到最新版）
-const APP_VER = '0924-1333';
+const APP_VER = '0924-1336';
 
 const DB = {
   // 当前存储前缀：游客 pw_；登录账号 pw_u{账号id}_，各账号数据互不可见
@@ -1041,7 +1041,12 @@ const CloudSync = {
     const f = g.files[this.FILE];
     if (!f || !f.content) return { status: 'fail', msg: '云端还没有数据，稍后会自动上传本地数据' };
     let cloud;
-    try { cloud = JSON.parse(f.content); } catch (e) { return { status: 'fail', msg: '云端数据格式异常，请到「查看后台」检查' }; }
+    try { cloud = JSON.parse(f.content); } catch (e) { cloud = null; }
+    if (!cloud || !cloud.data) {
+      // 云端数据损坏或为空：无法解析，用本机数据覆盖上传修复
+      const ok = await this.push();
+      return { status: ok ? 'pushed' : 'fail', msg: ok ? '检测到云端数据损坏，已用本机数据覆盖修复' : '云端数据损坏且覆盖失败，请检查 Token 或稍后再试' };
+    }
     const cloudMs = cloud.localMs || 0;
     const localMs = this.localMs();
     if (cloudMs > localMs + 2000) { // 云端更新（2 秒容差）
