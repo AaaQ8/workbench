@@ -1020,6 +1020,7 @@ const CloudSync = {
   // 智能同步：比较时间戳，新数据覆盖旧数据
   async sync() {
     if (!this.enabled()) return { status: 'disabled', msg: '云同步未开启' };
+    await this.reconcile(); // 先对账，确保指向账号下最新的 Gist
     const cloud = await this.pull();
     if (!cloud) return { status: 'fail', msg: '拉取云端失败，请检查网络或 Token' };
     const cloudMs = cloud.localMs || 0;
@@ -1043,8 +1044,31 @@ const CloudSync = {
     if (document.body.classList.contains('view-only')) return;
     if (this._timer) clearTimeout(this._timer);
     this._timer = setTimeout(() => {
+      this._timer = null;
       this.push();
-    }, 3000);
+    }, 1500);
+  },
+  // 启动挂载：页面切到后台时立即上传（防止用户改完数据马上关页面导致改动丢失）
+  init() {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && this._timer) { clearTimeout(this._timer); this._timer = null; this.push(); }
+    });
+  },
+  // 对账：自动指向账号下最新的工作台 Gist（修复多设备各自连了不同旧 Gist 导致不同步）
+  async reconcile() {
+    const token = this.token();
+    if (!token) return;
+    try {
+      const lr = await fetch('https://api.github.com/gists?per_page=100', {
+        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (!lr.ok) return;
+      const matches = (await lr.json()).filter(g => g.files && g.files[this.FILE]);
+      if (!matches.length) return;
+      matches.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+      const best = matches[0].id;
+      if (best && best !== this.gistId()) gSet('pw_gist_id', best);
+    } catch (e) {}
   },
   disconnect() {
     localStorage.removeItem('pw_gist_token');
@@ -1384,25 +1408,30 @@ const DeepLink = {
       Toast.show(`已打开${name}网页版；手机上可直接唤起App`, 'info');
       return;
     }
-    // 手机端：尝试 scheme
-    let settled = false;
-    const goFallback = () => {
-      if (settled) return;
-      settled = true;
-      // iOS → App Store；Android → 应用宝详情页（通用，所有浏览器可打开，不再用小米商店页）
-      const target = this.isIOS && cfg.iosId ? `https://apps.apple.com/cn/app/id${cfg.iosId}`
-        : (!this.isIOS && cfg.androidPkg) ? `https://sj.qq.com/appdetail/${cfg.androidPkg}`
-        : cfg.url;
-      window.location.href = target;
-    };
-    const timer = setTimeout(goFallback, 1600);
-    // 页面被切到后台说明 App 已成功打开 → 取消兜底
-    const onHide = () => {
-      if (document.hidden) { settled = true; clearTimeout(timer); document.removeEventListener('visibilitychange', onHide); }
-    };
+    // 手机端：逐级尝试唤起，全部失败才去下载页
+    // Android 首选 intent://（带包名，已安装直接打开且不弹选择框；Chrome/Edge 未安装会自动走 fallback_url）
+    const storeUrl = this.isIOS && cfg.iosId ? `https://apps.apple.com/cn/app/id${cfg.iosId}`
+      : (!this.isIOS && cfg.androidPkg) ? `https://sj.qq.com/appdetail/${cfg.androidPkg}`
+      : cfg.url;
+    const steps = [];
+    if (this.isAndroid && cfg.androidPkg && cfg.scheme) {
+      const schemeName = cfg.scheme.replace(/:\/?\/?$/, '');
+      steps.push(`intent://open/#Intent;scheme=${schemeName};package=${cfg.androidPkg};S.browser_fallback_url=${encodeURIComponent(storeUrl)};end`);
+    }
+    if (cfg.scheme) steps.push(cfg.scheme + (cfg.path || ''));
+    steps.push(storeUrl);
+    let settled = false, idx = 0, timer = null;
+    const onHide = () => { if (document.hidden) { settled = true; clearTimeout(timer); document.removeEventListener('visibilitychange', onHide); } };
     document.addEventListener('visibilitychange', onHide);
-    // scheme 后可带具体页面路径（如 //aweme/detail/123）
-    window.location.href = cfg.scheme + (cfg.path || '');
+    const next = () => {
+      if (settled) return;
+      idx++;
+      if (idx >= steps.length) { settled = true; document.removeEventListener('visibilitychange', onHide); return; }
+      window.location.href = steps[idx];
+      timer = setTimeout(next, 1800);
+    };
+    timer = setTimeout(next, 1800);
+    window.location.href = steps[0];
   }
 };
 
@@ -1555,9 +1584,11 @@ function ensureDailyTodos() {
       if (resetDaily || resetWeekly) { x.done = false; x.doneAt = null; changed = true; }
     }
   });
-  // 训练模块自动待办（模块被隐藏时不生成）
+  // 训练模块自动待办（模块被隐藏时不生成；用户当天手动删过的不重建）
+  const delLog = DB.get('wb_auto_del', {});
   Object.entries(CHECK_MODULES).forEach(([mod, cfg]) => {
     if (Settings.isHidden(mod === 'cet' ? 'cet' : mod)) return;
+    if (delLog[mod] === t) return;
     if (!todos.find(x => x.auto === mod && !x.archived)) {
       todos.unshift({ id: uid(), text: cfg.name, priority: 2, due: t, tags: ['打卡'], repeat: 'daily', auto: mod, done: false, doneAt: null, createdAt: Date.now(), archived: false });
       changed = true;
@@ -1722,6 +1753,9 @@ AfterRender.todos = box => {
     if (e.target.closest('[data-del]')) {
       const ok = await Dialog.confirm({ title: '删除任务', danger: true, text: `确定删除「${esc(x.text)}」吗？`, okText: '删除' });
       if (!ok) return;
+      if (x.auto) { // 自动任务：记下今天删过，启动时不再自动重建
+        const dl = DB.get('wb_auto_del', {}); dl[x.auto] = todayStr(); DB.set('wb_auto_del', dl);
+      }
       DB.set('wb_todos', todos.filter(v => v.id !== id));
       Toast.show('已删除'); saveAndRender();
     }
@@ -7655,12 +7689,15 @@ function startApp() {
   Ach.check();
   Guide.maybe();
   Reminders.start();
-  // 启动后自动拉取云端同步（延迟 2 秒，等初始化完成）
+  // 启动后自动同步云端（延迟 2 秒，等初始化完成）；CloudSync.init 挂载切后台立即上传
   if (!isView && CloudSync.enabled()) {
+    CloudSync.init();
     setTimeout(() => CloudSync.sync().then(r => {
       if (r.status === 'pulled') {
         Toast.show('☁️ 已从云端同步最新数据，即将刷新', 'info');
         setTimeout(() => location.reload(), 1500);
+      } else if (r.status === 'fail') {
+        Toast.show('☁️ 云端同步失败（网络或 Token 问题），稍后可手动同步', 'warn');
       }
     }), 2000);
     // 管理后台埋点：延迟 3 秒上报（等云同步拉取完成后再上报）
