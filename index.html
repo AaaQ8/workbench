@@ -326,6 +326,9 @@ const Account = {
   hasGuestData() { return Object.keys(localStorage).some(k => k.startsWith('pw_wb_')); }
 };
 
+// 构建版本号：部署时由 deploy_github.py 自动注入（设置 → 云同步 卡片显示，用于确认设备拿到最新版）
+const APP_VER = '0924-1324';
+
 const DB = {
   // 当前存储前缀：游客 pw_；登录账号 pw_u{账号id}_，各账号数据互不可见
   pref() { return Account.current ? `pw_u${Account.current.id}_` : 'pw_'; },
@@ -757,7 +760,7 @@ const SettingsUI = {
             const r = await CloudSync.sync();
             btn.textContent = '🔄 立即同步'; btn.disabled = false;
             Toast.show(r.msg, r.status === 'fail' ? 'error' : 'info');
-            if (r.status === 'pulled') { Toast.show('3 秒后刷新页面加载云端数据', 'info'); setTimeout(() => location.reload(), 3000); }
+            if (r.status === 'pulled') { Toast.show('已拉取云端数据，正在刷新页面…', 'info'); setTimeout(() => location.reload(), 1500); }
             else SettingsUI.renderCloudSync();
           } else if (e.target.closest('#cs-disconnect')) {
             const ok = await Dialog.confirm({ title: '断开云同步', text: '断开后不再自动同步，但已上传的数据仍在 Gist 上。确定断开吗？', okText: '断开' });
@@ -845,7 +848,8 @@ const SettingsUI = {
           <a class="btn" href="https://gist.github.com/${CloudSync.gistId()}" target="_blank" rel="noopener noreferrer">📋 查看后台</a>
           <button class="btn btn-danger" id="cs-disconnect">断开</button>
         </div>
-        <p class="small muted mt-2">点"查看后台"可在 GitHub 直接查看/编辑云端存储的全部数据。在另一台设备打开工作台 → 设置 → 云同步 → 粘贴同一个 Token 即可连接同一个 Gist。</p>`;
+        <p class="small muted mt-2">版本 <b>${APP_VER}</b> · 云端仓库尾号 <b>…${(CloudSync.gistId() || '').slice(-6)}</b> · 上次同步 <b>${CloudSync.lastSync() ? new Date(CloudSync.lastSync()).toLocaleString('sv') : '从未'}</b></p>
+        <p class="small muted mt-1">多台设备互通要点：①所有设备粘<b>同一个 Token</b>；②对比每台设备这里的"云端仓库尾号"，<b>尾号相同才在同一仓库</b>；③此页版本号每台设备一致才都支持自动对账。</p>`;
     }
     return `<div class="small muted mb-2">用 GitHub Gist 做免费云盘：数据变动自动上传，打开应用自动拉取。手机电脑用同一个 Token 即可互通。</div>
       <div class="small mb-1">① 打开 <a href="https://github.com/settings/tokens/new?scopes=gist" target="_blank" rel="noopener noreferrer">GitHub Token 生成页</a>，勾选 <code>gist</code> 权限，生成后复制</div>
@@ -1021,8 +1025,16 @@ const CloudSync = {
   async sync() {
     if (!this.enabled()) return { status: 'disabled', msg: '云同步未开启' };
     await this.reconcile(); // 先对账，确保指向账号下最新的 Gist
-    const cloud = await this.pull();
-    if (!cloud) return { status: 'fail', msg: '拉取云端失败，请检查网络或 Token' };
+    const r = await fetch(`https://api.github.com/gists/${this.gistId()}`, {
+      headers: { 'Authorization': `token ${this.token()}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (r.status === 401 || r.status === 403) return { status: 'fail', msg: 'Token 已失效！请到 GitHub 重新生成 Token，在云同步里断开后用新 Token 重连' };
+    if (!r.ok) return { status: 'fail', msg: '连接 GitHub 失败（HTTP ' + r.status + '），请检查网络' };
+    const g = await r.json();
+    const f = g.files[this.FILE];
+    if (!f || !f.content) return { status: 'fail', msg: '云端还没有数据，稍后会自动上传本地数据' };
+    let cloud;
+    try { cloud = JSON.parse(f.content); } catch (e) { return { status: 'fail', msg: '云端数据格式异常，请到「查看后台」检查' }; }
     const cloudMs = cloud.localMs || 0;
     const localMs = this.localMs();
     if (cloudMs > localMs + 2000) { // 云端更新（2 秒容差）
